@@ -53,7 +53,7 @@ h2{font-size:17px;margin:0 0 10px}.lesson{display:flex;gap:12px;align-items:cent
 <body>
 <div class="updatebar" id="updateBar">Yeni SpeakLoop sürümü hazır. <button id="updateNow">Güncelle</button></div>
 <div class="app">
- <div class="top"><div class="brand">🗣️ SpeakLoop <small id="appVersion">PWA</small></div><div class="streak" id="streak">🔥 1 gün</div></div>
+ <div class="top"><div class="brand">🗣️ SpeakLoop <small id="appVersion">V6</small></div><div class="streak" id="streak">🔥 1 gün</div></div>
 
  <section id="home" class="screen active">
   <div class="card hero">
@@ -61,8 +61,10 @@ h2{font-size:17px;margin:0 0 10px}.lesson{display:flex;gap:12px;align-items:cent
    <div class="progress"><i id="dailyBar" style="width:0%"></i></div>
    <div class="herogrid"><div class="mini"><b id="xp">0</b><span>XP</span></div><div class="mini"><b id="mastered">0</b><span>ÖĞRENİLDİ</span></div><div class="mini"><b id="due">0</b><span>TEKRAR</span></div></div>
   </div>
-  <div class="card"><h2>Bugünkü konuşma</h2><div class="lesson"><div class="lessonicon">☕</div><div class="lessoncopy"><b id="homeTitle">A1 • Günlük İngilizce</b><span>Modern İngilizceyi farklı hızlarda dinle, shadowing yap ve aynı cümleyi söyle.</span></div></div><button class="btn primary wide" style="margin-top:14px" id="startLesson">Derse Başla →</button></div>
-  <div class="card"><h2>Seviye</h2><div class="levelrow" id="levels"></div></div>
+  <div class="card"><h2>Bugünkü Akıllı Ders</h2><div class="lesson"><div class="lessonicon">☕</div><div class="lessoncopy"><b id="homeTitle">A1 • Günlük İngilizce</b><span>Dinleme → hızlı konuşma → shadowing → üretim → hafıza tekrarı.</span></div></div><button class="btn primary wide" style="margin-top:14px" id="startLesson">Derse Başla →</button></div>
+  <div class="card"><h2>🎯 Bugünkü 5 aşama</h2>
+<div class="notice"><b>1. Anla</b> — doğal cümleyi dinle<br><b>2. Hızlan</b> — 0.9× → 1.0× → 1.15×<br><b>3. Shadowing</b> — sesin hemen arkasından tekrar et<br><b>4. Üret</b> — dikte ile aynı cümleyi söyle<br><b>5. Hatırla</b> — unutma eğrisine göre tekrar et</div></div>
+<div class="card"><h2>Seviye</h2><div class="levelrow" id="levels"></div></div>
   <div class="card"><h2>🧠 Unutmayı önleyen sistem</h2><div class="notice">Yeni cümleler başarı puanına göre tekrar planına girer. Zorlandıkların aynı gün/ertesi gün yeniden gelir; iyi bildiklerin 1 → 3 → 7 → 14 → 30 → 60 gün aralıklarına ilerler.</div></div>
  </section>
 
@@ -85,6 +87,7 @@ h2{font-size:17px;margin:0 0 10px}.lesson{display:flex;gap:12px;align-items:cent
       <div id="naturalNote" class="natural"></div>
     </div>
     <button class="btn wide shadowbtn" id="shadow">🎧 Shadowing — Dinle ve hemen arkasından söyle</button>
+<button class="btn secondary wide" style="margin-top:8px" id="blind">👂 Kulak Testi — Yazıyı gizle ve dinle</button>
    </div>
    <div class="micwrap"><button class="mic" id="mic">🎤</button></div>
    <div class="hint" id="micHint">🎤 düğmesine bas → aşağıdaki alan açılınca iPhone klavyesindeki mikrofonla İngilizce cümleyi söyle.</div>
@@ -157,7 +160,7 @@ try{let x=localStorage.getItem("speakloopV5");if(x)S=Object.assign(S,JSON.parse(
 const $=id=>document.getElementById(id), key=(l,i)=>l+"-"+i, dayms=86400000;
 function save(){try{localStorage.setItem("speakloopV5",JSON.stringify(S))}catch(e){}}
 function todayKey(){return new Date().toISOString().slice(0,10)}
-function ensureItem(l,i){let k=key(l,i);if(!S.items[k])S.items[k]={stage:0,next:0,tries:0,best:0};return S.items[k]}
+function ensureItem(l,i){let k=key(l,i);if(!S.items[k])S.items[k]={stage:0,next:0,tries:0,best:0,lapses:0};return S.items[k]}
 function normalize(s){return String(s||"").toLowerCase().replace(/[’]/g,"'").replace(/[^a-z0-9'\s]/g," ").replace(/\s+/g," ").trim()}
 function similarity(a,b){
  let A=normalize(a).split(" ").filter(Boolean),B=normalize(b).split(" ").filter(Boolean);if(!A.length||!B.length)return 0;
@@ -167,10 +170,13 @@ function similarity(a,b){
 }
 function updateMemory(score){
  let it=ensureItem(S.level,S.idx);it.tries++;it.best=Math.max(it.best,score);
- if(score>=85)it.stage=Math.min(it.stage+1,INTERVALS.length-1);
- else if(score>=65)it.stage=Math.max(1,it.stage);
- else it.stage=0;
- let days=INTERVALS[it.stage];it.next=Date.now()+days*dayms;S.xp+=score>=85?10:score>=65?5:1;save()
+ if(score>=90) it.stage=Math.min(it.stage+1,INTERVALS.length-1);
+ else if(score>=75) it.stage=Math.max(1,it.stage);
+ else { it.stage=0; it.lapses=(it.lapses||0)+1; }
+ let days=INTERVALS[it.stage];
+ // Başarısız cümle birkaç gün kaybolmaz: 10 dakika sonra tekrar kuyruğuna girer.
+ it.next=score<75 ? Date.now()+10*60*1000 : Date.now()+days*dayms;
+ S.xp+=score>=90?12:score>=75?6:1;save()
 }
 function current(){return LESSONS[S.level][S.idx%LESSONS[S.level].length]}
 function speak(rate){let x=current();if(!("speechSynthesis"in window)){ $("result").textContent="Sesli okuma bu ortamda desteklenmiyor.";return}speechSynthesis.cancel();let u=new SpeechSynthesisUtterance(x[1]);u.lang="en-US";u.rate=rate;speechSynthesis.speak(u)}
@@ -219,7 +225,12 @@ $("listen").onclick=()=>speakAt(selectedRate);$("slow").onclick=()=>speakAt(.62)
 document.querySelectorAll(".speedbtn").forEach(b=>b.onclick=()=>{
  selectedRate=Number(b.dataset.rate);document.querySelectorAll(".speedbtn").forEach(x=>x.classList.toggle("on",x===b));speakAt(selectedRate);
 });
-$("shadow").onclick=shadow;$("again").onclick=()=>{renderPractice();speak(.78);setTimeout(()=>{$("dictateInput").focus()},900)};
+$("shadow").onclick=shadow;
+$("blind").onclick=()=>{
+ let t=$("target"), tr=$("translation"), old=t.textContent;
+ t.textContent="••••••••"; tr.textContent="Önce sadece dinle. Ne duyduğunu zihninde çöz.";
+ speakAt(selectedRate,()=>{setTimeout(()=>{t.textContent=old;tr.textContent=current()[2]},900)});
+};$("again").onclick=()=>{renderPractice();speak(.78);setTimeout(()=>{$("dictateInput").focus()},900)};
 $("next").onclick=()=>{S.idx=(S.idx+1)%LESSONS[S.level].length;S.minutes=(S.minutes||0)+.5;save();renderPractice();renderHome();speak(.88)};
 $("startLesson").onclick=()=>{showScreen("practice");renderPractice();setTimeout(()=>speak(.88),150)};
 document.querySelectorAll(".navbtn").forEach(b=>b.onclick=()=>showScreen(b.dataset.screen));
