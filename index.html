@@ -72,7 +72,7 @@ h2{font-size:17px;margin:0 0 10px}.lesson{display:flex;gap:12px;align-items:cent
 <body>
 <div class="updatebar" id="updateBar">Yeni SpeakLoop sürümü hazır. <button id="updateNow">Güncelle</button></div>
 <div class="app">
- <div class="top"><div class="brand">🗣️ SpeakLoop <small id="appVersion">V6.1</small></div><div class="streak" id="streak">🔥 1 gün</div></div>
+ <div class="top"><div class="brand">🗣️ SpeakLoop <small id="appVersion">V6.1.1</small></div><div class="streak" id="streak">🔥 1 gün</div></div>
 
  <section id="home" class="screen active">
   <div class="card hero">
@@ -273,8 +273,9 @@ renderHome();renderPractice();renderReview();
 <script>
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
   let newWorker=null;
-  navigator.serviceWorker.register('./sw.js').then(reg=>{
+  navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'}).then(reg=>{
     reg.update();
+    setInterval(()=>reg.update(),5*60*1000);
     reg.addEventListener('updatefound',()=>{
       newWorker=reg.installing;
       newWorker.addEventListener('statechange',()=>{
