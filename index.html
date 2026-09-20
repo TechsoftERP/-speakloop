@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="SpeakLoop">
+<meta name="theme-color" content="#4169e1">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<title>SpeakLoop — Fast English & Shadowing</title>
+<style>
+:root{--bg:#f5f7fb;--card:#fff;--ink:#172033;--muted:#6c7586;--blue:#4169e1;--green:#16a36a;--red:#d84b4b;--line:#e7eaf0;--soft:#eef2ff}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}body{margin:0;background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;color:var(--ink)}
+.app{max-width:620px;margin:auto;min-height:100vh;padding:calc(14px + env(safe-area-inset-top)) 14px calc(90px + env(safe-area-inset-bottom))}
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}.brand{font-size:21px;font-weight:900}.streak{background:#fff0df;padding:7px 10px;border-radius:99px;font-size:12px;font-weight:800}
+.card{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:18px;margin-bottom:12px;box-shadow:0 7px 25px #1720330b}
+.hero{background:linear-gradient(135deg,#283e81,#4169e1);color:white}.hero small{opacity:.8}.hero h1{margin:5px 0;font-size:24px}.herogrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:13px}.mini{background:#ffffff18;border:1px solid #ffffff22;border-radius:14px;padding:10px;text-align:center}.mini b{display:block;font-size:18px}.mini span{font-size:9px}
+.progress{height:9px;background:#ffffff25;border-radius:99px;overflow:hidden;margin-top:12px}.progress i{display:block;height:100%;background:white;border-radius:99px}
+h2{font-size:17px;margin:0 0 10px}.lesson{display:flex;gap:12px;align-items:center}.lessonicon{width:52px;height:52px;border-radius:16px;background:var(--soft);display:grid;place-items:center;font-size:26px}.lessoncopy{flex:1}.lessoncopy b{display:block}.lessoncopy span{font-size:12px;color:var(--muted)}
+.btn{border:0;border-radius:15px;min-height:49px;padding:11px 14px;font:inherit;font-weight:850;cursor:pointer;touch-action:manipulation}.primary{background:var(--blue);color:#fff}.secondary{background:#eef1f6;color:var(--ink)}.green{background:var(--green);color:#fff}.wide{width:100%}
+.screen{display:none}.screen.active{display:block}
+.sentence{text-align:center;padding:12px 2px}.sentence .en{font-size:25px;line-height:1.28;font-weight:900}.sentence .tr{font-size:14px;color:var(--muted);margin-top:7px}.scene{display:inline-block;background:var(--soft);color:#3653ad;padding:6px 10px;border-radius:99px;font-size:11px;font-weight:800;margin-bottom:12px}
+.micwrap{text-align:center;margin:18px 0}.mic{width:92px;height:92px;border:0;border-radius:50%;background:var(--blue);color:#fff;font-size:35px;box-shadow:0 10px 30px #4169e144}.mic.listening{animation:pulse 1s infinite;background:var(--red)}@keyframes pulse{50%{transform:scale(1.08);box-shadow:0 0 0 16px #d84b4b20}}
+.hint{text-align:center;color:var(--muted);font-size:12px}.heard{background:#f7f8fb;border-radius:14px;padding:12px;margin:10px 0;min-height:44px;font-size:14px}.result{text-align:center;font-weight:900;font-size:18px;min-height:28px}.scorebig{font-size:38px}.good{color:var(--green)}.bad{color:var(--red)}
+.wordrow{display:flex;gap:5px;flex-wrap:wrap;justify-content:center;margin-top:8px}.word{padding:4px 7px;border-radius:7px;background:#e9f7ef;color:#14754e;font-size:12px}.word.miss{background:#fdecec;color:#a93434}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}.actions .wide{grid-column:1/-1}
+.levelrow{display:flex;gap:6px;overflow:auto;padding-bottom:3px}.level{min-width:58px;border:1px solid var(--line);background:white;border-radius:13px;padding:10px;font-weight:850}.level.on{background:var(--blue);color:white}
+.reviewitem{display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--line);padding:10px 0}.reviewitem:first-of-type{border-top:0}.reviewitem span{font-size:12px;color:var(--muted)}
+.bottom{position:fixed;left:0;right:0;bottom:0;background:#fffc;border-top:1px solid var(--line);backdrop-filter:blur(16px);padding:7px 10px calc(7px + env(safe-area-inset-bottom));display:flex;justify-content:center;z-index:20}.bottomin{width:min(620px,100%);display:grid;grid-template-columns:repeat(3,1fr);gap:5px}.navbtn{border:0;background:transparent;padding:7px;font-size:10px;font-weight:800;color:#697386}.navbtn b{display:block;font-size:21px;margin-bottom:2px}.navbtn.on{color:var(--blue)}
+.notice{font-size:11px;color:var(--muted);line-height:1.45;background:#f7f8fb;padding:10px;border-radius:12px}
+
+.dictatebox{margin:15px 0 4px}.dictatebox label{display:block;text-align:center;font-size:12px;font-weight:800;margin-bottom:7px}
+.dictate{width:100%;min-height:58px;border:2px solid #dfe4ef;border-radius:16px;padding:14px;font:inherit;font-size:16px;background:#fff;color:var(--ink);outline:none}
+.dictate:focus{border-color:var(--blue);box-shadow:0 0 0 4px #4169e115}
+.dictatehelp{font-size:11px;line-height:1.45;color:var(--muted);text-align:center;margin:7px 0}
+.checkbtn{margin-top:8px}
+
+.speedlab{margin-top:14px;border-top:1px solid var(--line);padding-top:13px}
+.speedtitle{font-size:12px;font-weight:900;margin-bottom:8px}
+.speedgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.speedbtn{border:1px solid var(--line);background:#fff;border-radius:12px;padding:9px 3px;font-size:11px;font-weight:850;color:var(--ink)}
+.speedbtn.on{background:var(--blue);color:#fff;border-color:var(--blue)}
+.chunkbox{margin-top:10px;background:#f7f8fb;border-radius:14px;padding:11px;font-size:12px;line-height:1.55}
+.chunkbox b{display:block;margin-bottom:3px}
+.natural{color:#3653ad;font-weight:800}
+.shadowbtn{margin-top:8px;background:#1f2937;color:#fff}
+.modepill{display:inline-block;margin:4px 3px 0 0;padding:5px 8px;border-radius:99px;background:#eef2ff;color:#3653ad;font-size:10px;font-weight:850}
+.updatebar{display:none;position:fixed;left:14px;right:14px;top:calc(10px + env(safe-area-inset-top));z-index:99;max-width:592px;margin:auto;background:#172033;color:white;border-radius:15px;padding:11px 12px;box-shadow:0 8px 30px #0003;font-size:12px}.updatebar button{float:right;border:0;border-radius:9px;padding:5px 9px;font-weight:800}
+</style>
+</head>
+<body>
+<div class="updatebar" id="updateBar">Yeni SpeakLoop sürümü hazır. <button id="updateNow">Güncelle</button></div>
+<div class="app">
+ <div class="top"><div class="brand">🗣️ SpeakLoop <small id="appVersion">PWA</small></div><div class="streak" id="streak">🔥 1 gün</div></div>
+
+ <section id="home" class="screen active">
+  <div class="card hero">
+   <small>BUGÜNKÜ HEDEF</small><h1>10 dakika konuş</h1>
+   <div class="progress"><i id="dailyBar" style="width:0%"></i></div>
+   <div class="herogrid"><div class="mini"><b id="xp">0</b><span>XP</span></div><div class="mini"><b id="mastered">0</b><span>ÖĞRENİLDİ</span></div><div class="mini"><b id="due">0</b><span>TEKRAR</span></div></div>
+  </div>
+  <div class="card"><h2>Bugünkü konuşma</h2><div class="lesson"><div class="lessonicon">☕</div><div class="lessoncopy"><b id="homeTitle">A1 • Günlük İngilizce</b><span>Modern İngilizceyi farklı hızlarda dinle, shadowing yap ve aynı cümleyi söyle.</span></div></div><button class="btn primary wide" style="margin-top:14px" id="startLesson">Derse Başla →</button></div>
+  <div class="card"><h2>Seviye</h2><div class="levelrow" id="levels"></div></div>
+  <div class="card"><h2>🧠 Unutmayı önleyen sistem</h2><div class="notice">Yeni cümleler başarı puanına göre tekrar planına girer. Zorlandıkların aynı gün/ertesi gün yeniden gelir; iyi bildiklerin 1 → 3 → 7 → 14 → 30 → 60 gün aralıklarına ilerler.</div></div>
+ </section>
+
+ <section id="practice" class="screen">
+  <div class="card">
+   <div class="scene" id="scene"></div>
+   <div class="sentence"><div class="en" id="target"></div><div class="tr" id="translation"></div></div>
+   <div class="actions"><button class="btn secondary" id="listen">🔊 Dinle</button><button class="btn secondary" id="slow">🐢 Yavaş Dinle</button></div>
+   <div class="speedlab">
+    <div class="speedtitle">⚡ Hızlı İngilizce Anlama</div>
+    <div class="speedgrid">
+      <button class="speedbtn" data-rate=".68">0.7×</button>
+      <button class="speedbtn on" data-rate=".88">0.9×</button>
+      <button class="speedbtn" data-rate="1.02">1.0×</button>
+      <button class="speedbtn" data-rate="1.16">1.15×</button>
+    </div>
+    <div class="chunkbox">
+      <b>Konuşma kulağı</b>
+      <div id="chunks"></div>
+      <div id="naturalNote" class="natural"></div>
+    </div>
+    <button class="btn wide shadowbtn" id="shadow">🎧 Shadowing — Dinle ve hemen arkasından söyle</button>
+   </div>
+   <div class="micwrap"><button class="mic" id="mic">🎤</button></div>
+   <div class="hint" id="micHint">🎤 düğmesine bas → aşağıdaki alan açılınca iPhone klavyesindeki mikrofonla İngilizce cümleyi söyle.</div>
+   <div class="dictatebox">
+     <label for="dictateInput">SENİN CÜMLEN</label>
+     <input id="dictateInput" class="dictate" type="text" inputmode="text" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="Buraya dokun → klavye 🎤 → İngilizce konuş">
+     <div class="dictatehelp">iPhone diktesi konuşmanı metne çevirecek. Sonra “Cümleyi Kontrol Et”e bas.</div>
+     <button class="btn primary wide checkbtn" id="checkDictation">✓ Cümleyi Kontrol Et</button>
+   </div>
+   <div class="heard" id="heard">Dikte sonucu burada değerlendirilecek…</div>
+   <div class="result" id="result"></div><div class="wordrow" id="words"></div>
+   <div class="actions"><button class="btn secondary" id="again">↻ Tekrar</button><button class="btn green" id="next">Sonraki →</button></div>
+  </div>
+ </section>
+
+ <section id="review" class="screen">
+  <div class="card"><h2>🔁 Hafıza Tekrarları</h2><div class="notice">Program: ilk öğrenme → 1 gün → 3 gün → 7 gün → 14 gün → 30 gün. Hata yaparsan aralık tekrar kısalır.</div><div id="reviewList"></div><button class="btn primary wide" id="reviewNow" style="margin-top:10px">Tekrarları Çalış</button></div>
+  <div class="card"><button class="btn secondary wide" id="reset">Tüm ilerlemeyi sıfırla</button></div>
+ </section>
+</div>
+
+<nav class="bottom"><div class="bottomin"><button class="navbtn on" data-screen="home"><b>⌂</b>Ana Sayfa</button><button class="navbtn" data-screen="practice"><b>🎤</b>Konuş</button><button class="navbtn" data-screen="review"><b>↻</b>Tekrar</button></div></nav>
+
+<script>
+(function(){
+"use strict";
+const LESSONS={
+A1:[
+["👋 Günlük","Hey, how's it going?","Selam, nasıl gidiyor?","Hey / how's it going?","Günlük konuşmada “How are you?” yerine çok sık duyarsın."],
+["💬 Günlük","I'm good, thanks. How about you?","İyiyim, teşekkürler. Ya sen?","I'm good / thanks / how about you?","Kısa parçalar halinde duyup tek akışta söyle."],
+["☕ Kafede","Can I get a coffee, please?","Bir kahve alabilir miyim, lütfen?","Can I get / a coffee / please?","Doğal sipariş kalıbı: “Can I get...?”"],
+["☕ Kafede","I'll have the same, thanks.","Ben de aynısından alayım, teşekkürler.","I'll have / the same / thanks","“I will” konuşmada çoğunlukla “I'll” olur."],
+["🛍️ Alışveriş","I'm just looking, thanks.","Sadece bakıyorum, teşekkürler.","I'm just / looking / thanks","Mağazada çok doğal ve kısa bir cevap."],
+["📱 Günlük","Give me a second.","Bana bir saniye ver.","Give me / a second","Hızlı konuşmada kelimeler birbirine bağlanır."],
+["🚕 Seyahat","Could you drop me off here?","Beni burada indirebilir misiniz?","Could you / drop me off / here?","“Could you” hızlı konuşmada kulağa daha birleşik gelebilir."],
+["🏨 Otelde","Is breakfast included?","Kahvaltı dahil mi?","Is breakfast / included?","Seyahatte yüksek frekanslı kalıp."],
+["🍽️ Restoran","Could we get the bill, please?","Hesabı alabilir miyiz, lütfen?","Could we get / the bill / please?","İngiliz İngilizcesinde “bill”, ABD'de “check” sık kullanılır."],
+["🧭 Yön","Is it far from here?","Buradan uzak mı?","Is it far / from here?","Kısa, hızlı ve çok kullanışlı."]
+],
+A2:[
+["📅 Plan","Are you free later?","Daha sonra müsait misin?","Are you free / later?","Doğal plan yapma kalıbı."],
+["💬 Günlük","I'm on my way.","Yoldayım / geliyorum.","I'm / on my way","Çok sık kullanılan günlük ifade."],
+["📱 Mesaj","I'll text you when I get there.","Oraya varınca sana mesaj atacağım.","I'll text you / when I get there","Hızlı konuşmada “when I” birbirine bağlanır."],
+["⏰ Günlük","I'm running a little late.","Biraz gecikiyorum.","I'm running / a little late","“a little” hızlı konuşmada sıkışır."],
+["💬 Tepki","That sounds good to me.","Bu bana iyi geliyor / bence uygun.","That sounds / good to me","Onay verirken doğal bir kalıp."],
+["🧠 Anlama","I didn't catch that. Could you say it again?","Onu anlayamadım. Tekrar söyler misiniz?","I didn't catch that / could you / say it again?","Hızlı İngilizceyi anlamadığında kullanacağın kurtarıcı cümle."]
+],
+B1:[
+["💼 İş","I'll get back to you by the end of the day.","Gün sonuna kadar sana dönüş yapacağım.","I'll get back to you / by the end of the day","İş İngilizcesinde doğal ve sık."],
+["💬 Fikir","I see what you mean, but I'm not totally convinced.","Ne demek istediğini anlıyorum ama tamamen ikna olmadım.","I see what you mean / but / I'm not totally convinced","Fikir ayrılığını yumuşak ifade eder."],
+["📞 Telefon","Sorry, you cut out for a second.","Üzgünüm, sesin bir an kesildi.","Sorry / you cut out / for a second","Telefon ve çevrim içi görüşmelerde güncel kullanım."],
+["🤝 Plan","Let's figure it out as we go.","İlerledikçe çözüm buluruz.","Let's figure it out / as we go","Doğal, kalıp halinde öğrenilmesi gereken ifade."],
+["💬 Günlük","To be fair, I hadn't thought about it that way.","Hakkını vermek gerekirse, o açıdan düşünmemiştim.","To be fair / I hadn't thought about it / that way","Doğal konuşma bağlayıcısı."]
+],
+B2:[
+["🤝 Toplantı","As far as I can tell, we're heading in the right direction.","Görebildiğim kadarıyla doğru yönde ilerliyoruz.","As far as I can tell / we're heading / in the right direction","Cümleyi kelime kelime değil, anlam bloklarıyla dinle."],
+["💼 İş","We might want to rethink how we're approaching this.","Buna nasıl yaklaştığımızı yeniden düşünmek isteyebiliriz.","We might want to / rethink / how we're approaching this","Doğal ve diplomatik öneri."],
+["💬 Tartışma","I get where you're coming from, but there's another side to it.","Bakış açını anlıyorum ama bunun başka bir tarafı da var.","I get where you're coming from / but / there's another side to it","Akıcı tartışma kalıbı."],
+["⚡ Hızlı Konuşma","What are you gonna do about it?","Bu konuda ne yapacaksın?","What are you / gonna do / about it?","“going to” gündelik hızlı konuşmada sıklıkla “gonna” gibi duyulur; yazıda bağlama göre standart biçim tercih edilir."]
+],
+C1:[
+["🎓 Tartışma","What it really comes down to is whether the benefits outweigh the risks.","Asıl mesele, faydaların risklerden ağır basıp basmadığıdır.","What it really comes down to / is whether / the benefits outweigh the risks","İleri düzey doğal tartışma kalıbı."],
+["💼 Strateji","Having said that, we shouldn't lose sight of the bigger picture.","Bununla birlikte, büyük resmi gözden kaçırmamalıyız.","Having said that / we shouldn't lose sight of / the bigger picture","Bağlayıcı ifadeyi tek parça olarak öğren."],
+["🎓 Görüş","I wouldn't go so far as to say it's a complete failure.","Tam bir başarısızlık olduğunu söyleyecek kadar ileri gitmezdim.","I wouldn't go so far as to say / it's a complete failure","Nüanslı görüş bildirme."],
+["⚡ Doğal Konuşma","If I'd known earlier, I would've handled it differently.","Daha önce bilseydim, farklı ele alırdım.","If I'd known earlier / I would've handled it / differently","“I would have” doğal konuşmada “I would've” şeklinde sık duyulur."]
+]}; 
+const LEVELS=["A1","A2","B1","B2","C1"], INTERVALS=[0,1,3,7,14,30,60];
+let S={level:"A1",idx:0,xp:0,items:{},minutes:0,lastDay:"",streak:1};
+try{let x=localStorage.getItem("speakloopV5");if(x)S=Object.assign(S,JSON.parse(x))}catch(e){}
+const $=id=>document.getElementById(id), key=(l,i)=>l+"-"+i, dayms=86400000;
+function save(){try{localStorage.setItem("speakloopV5",JSON.stringify(S))}catch(e){}}
+function todayKey(){return new Date().toISOString().slice(0,10)}
+function ensureItem(l,i){let k=key(l,i);if(!S.items[k])S.items[k]={stage:0,next:0,tries:0,best:0};return S.items[k]}
+function normalize(s){return String(s||"").toLowerCase().replace(/[’]/g,"'").replace(/[^a-z0-9'\s]/g," ").replace(/\s+/g," ").trim()}
+function similarity(a,b){
+ let A=normalize(a).split(" ").filter(Boolean),B=normalize(b).split(" ").filter(Boolean);if(!A.length||!B.length)return 0;
+ let used=new Array(B.length).fill(false),hit=0;
+ A.forEach(w=>{let j=B.findIndex((x,i)=>!used[i]&&x===w);if(j>=0){used[j]=true;hit++}});
+ return Math.round(100*(2*hit/(A.length+B.length)));
+}
+function updateMemory(score){
+ let it=ensureItem(S.level,S.idx);it.tries++;it.best=Math.max(it.best,score);
+ if(score>=85)it.stage=Math.min(it.stage+1,INTERVALS.length-1);
+ else if(score>=65)it.stage=Math.max(1,it.stage);
+ else it.stage=0;
+ let days=INTERVALS[it.stage];it.next=Date.now()+days*dayms;S.xp+=score>=85?10:score>=65?5:1;save()
+}
+function current(){return LESSONS[S.level][S.idx%LESSONS[S.level].length]}
+function speak(rate){let x=current();if(!("speechSynthesis"in window)){ $("result").textContent="Sesli okuma bu ortamda desteklenmiyor.";return}speechSynthesis.cancel();let u=new SpeechSynthesisUtterance(x[1]);u.lang="en-US";u.rate=rate;speechSynthesis.speak(u)}
+
+let selectedRate=.88;
+function speakAt(rate, cb){
+ let x=current(); if(!("speechSynthesis" in window))return;
+ speechSynthesis.cancel(); let u=new SpeechSynthesisUtterance(x[1]);u.lang="en-US";u.rate=rate||selectedRate;
+ if(cb)u.onend=cb;speechSynthesis.speak(u);
+}
+function shadow(){
+ $("result").className="result";$("result").textContent="🎧 Dinle… Biter bitmez aynı ritimle söyle.";
+ speakAt(selectedRate,()=>{
+   $("dictateInput").focus();
+   $("micHint").textContent="Şimdi gecikmeden cümleyi taklit et. Klavye 🎤 diktesini açıp aynı ritimde söyle.";
+ });
+}
+function showScreen(id){document.querySelectorAll(".screen").forEach(x=>x.classList.remove("active"));$(id).classList.add("active");document.querySelectorAll(".navbtn").forEach(x=>x.classList.toggle("on",x.dataset.screen===id));if(id==="review")renderReview()}
+function renderHome(){
+ $("xp").textContent=S.xp;let vals=Object.values(S.items);$("mastered").textContent=vals.filter(x=>x.stage>=4).length;$("due").textContent=vals.filter(x=>x.next&&x.next<=Date.now()).length;
+ $("dailyBar").style.width=Math.min(100,(S.minutes||0)/10*100)+"%";$("homeTitle").textContent=S.level+" • Konuşma Pratiği";
+ $("levels").innerHTML=LEVELS.map(l=>`<button class="level ${S.level===l?"on":""}" data-l="${l}">${l}</button>`).join("");
+ document.querySelectorAll(".level").forEach(b=>b.onclick=()=>{S.level=b.dataset.l;S.idx=0;save();renderHome();renderPractice()});
+}
+function renderPractice(){
+ let x=current();$("scene").textContent=x[0];$("target").textContent=x[1];$("translation").textContent=x[2];
+ $("chunks").innerHTML=(x[3]||x[1]).split("/").map(s=>`<span class="modepill">${s.trim()}</span>`).join("");
+ $("naturalNote").textContent=x[4]||"Cümleyi anlam blokları halinde dinle.";
+ $("heard").textContent="Dikte sonucu burada değerlendirilecek…";$("result").textContent="";$("words").innerHTML="";if($("dictateInput"))$("dictateInput").value="";
+}
+function paintWords(spoken){
+ let target=normalize(current()[1]).split(" "),got=normalize(spoken).split(" ");$("words").innerHTML=target.map(w=>`<span class="word ${got.includes(w)?"":"miss"}">${w}</span>`).join("")
+}
+function grade(spoken){
+ let sc=similarity(current()[1],spoken);paintWords(spoken);updateMemory(sc);
+ $("result").className="result "+(sc>=85?"good":"bad");
+ $("result").innerHTML=sc>=85?`<span class="scorebig">${sc}%</span><br>✅ Doğru!`:sc>=65?`<span class="scorebig">${sc}%</span><br>👍 Yaklaştın, tekrar söyle.`:`<span class="scorebig">${sc}%</span><br>🔁 Tekrar dinle ve yeniden söyle.`;
+ renderHome()
+}
+function renderReview(){
+ let rows=[];LEVELS.forEach(l=>LESSONS[l].forEach((x,i)=>{let it=S.items[key(l,i)];if(it&&it.tries)rows.push({l,i,x,it})}));
+ rows.sort((a,b)=>(a.it.next||0)-(b.it.next||0));
+ $("reviewList").innerHTML=rows.length?rows.slice(0,12).map(r=>`<div class="reviewitem"><div><b>${r.l} · ${r.x[1]}</b><br><span>En iyi: %${r.it.best} · Aşama ${r.it.stage}</span></div><span>${r.it.next<=Date.now()?"Şimdi":"Sonra"}</span></div>`).join(""):'<div class="notice" style="margin-top:10px">Henüz tekrar kaydı yok. Konuşma dersine başlayın.</div>';
+}
+$("listen").onclick=()=>speakAt(selectedRate);$("slow").onclick=()=>speakAt(.62);
+document.querySelectorAll(".speedbtn").forEach(b=>b.onclick=()=>{
+ selectedRate=Number(b.dataset.rate);document.querySelectorAll(".speedbtn").forEach(x=>x.classList.toggle("on",x===b));speakAt(selectedRate);
+});
+$("shadow").onclick=shadow;$("again").onclick=()=>{renderPractice();speak(.78);setTimeout(()=>{$("dictateInput").focus()},900)};
+$("next").onclick=()=>{S.idx=(S.idx+1)%LESSONS[S.level].length;S.minutes=(S.minutes||0)+.5;save();renderPractice();renderHome();speak(.88)};
+$("startLesson").onclick=()=>{showScreen("practice");renderPractice();setTimeout(()=>speak(.88),150)};
+document.querySelectorAll(".navbtn").forEach(b=>b.onclick=()=>showScreen(b.dataset.screen));
+$("reviewNow").onclick=()=>{
+ let due=[];LESSONS[S.level].forEach((x,i)=>{let it=S.items[key(S.level,i)];if(it&&it.next<=Date.now())due.push(i)});
+ if(due.length)S.idx=due[0];else S.idx=0;save();renderPractice();showScreen("practice");setTimeout(()=>speak(.88),150)
+};
+$("reset").onclick=()=>{if(confirm("Tüm SpeakLoop ilerlemesi silinsin mi?")){localStorage.removeItem("speakloopV5");location.reload()}};
+$("mic").onclick=()=>{
+ let inp=$("dictateInput");
+ inp.focus();
+ $("micHint").textContent="Klavye açıldı. Şimdi iPhone klavyesindeki 🎤 dikte simgesine basıp İngilizce cümleyi söyle.";
+ setTimeout(()=>{try{inp.scrollIntoView({behavior:"smooth",block:"center"})}catch(e){}},180);
+};
+$("checkDictation").onclick=()=>{
+ let t=$("dictateInput").value.trim();
+ if(!t){$("result").className="result bad";$("result").textContent="Önce klavye mikrofonuyla cümleyi söyle.";return}
+ $("heard").textContent="🎤 "+t;
+ grade(t);
+};
+$("dictateInput").addEventListener("keydown",e=>{if(e.key==="Enter"){$("checkDictation").click();e.preventDefault()}});
+$("dictateInput").addEventListener("input",()=>{$("heard").textContent=$("dictateInput").value?"🎤 "+$("dictateInput").value:"Dikte sonucu burada değerlendirilecek…"});
+if(S.lastDay!==todayKey()){S.minutes=0;S.lastDay=todayKey();save()}
+renderHome();renderPractice();renderReview();
+})();
+</script>
+
+<script>
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+  let newWorker=null;
+  navigator.serviceWorker.register('./sw.js').then(reg=>{
+    reg.update();
+    reg.addEventListener('updatefound',()=>{
+      newWorker=reg.installing;
+      newWorker.addEventListener('statechange',()=>{
+        if(newWorker.state==='installed' && navigator.serviceWorker.controller){
+          document.getElementById('updateBar').style.display='block';
+        }
+      });
+    });
+  });
+  document.getElementById('updateNow').onclick=()=>{ if(newWorker)newWorker.postMessage({type:'SKIP_WAITING'}); else location.reload(); };
+  navigator.serviceWorker.addEventListener('controllerchange',()=>location.reload());
+}
+</script>
+</body>
+</html>
