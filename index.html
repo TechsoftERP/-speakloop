@@ -76,7 +76,7 @@ h2{font-size:17px;margin:0 0 10px}.lesson{display:flex;gap:12px;align-items:cent
 <body>
 <div class="updatebar" id="updateBar">Yeni SpeakLoop sürümü hazır. <button id="updateNow">Güncelle</button></div>
 <div class="app">
- <div class="top"><div class="brand">🗣️ SpeakLoop <small id="appVersion">V6.2</small></div><div class="streak" id="streak">🔥 1 gün</div></div>
+ <div class="top"><div class="brand">🗣️ SpeakLoop <small id="appVersion">V6.3</small></div><div class="streak" id="streak">🔥 1 gün</div></div>
 
  <section id="home" class="screen active">
   <div class="card hero">
@@ -94,7 +94,7 @@ h2{font-size:17px;margin:0 0 10px}.lesson{display:flex;gap:12px;align-items:cent
   <div class="card">
    <div class="scene" id="scene"></div>
    <div class="sentence"><div class="en" id="target"></div><div class="tr" id="translation"></div></div>
-   <div class="actions"><button class="btn secondary" id="listen">🔊 Dinle</button><button class="btn secondary" id="slow">🐢 Yavaş Dinle</button></div>
+   <div class="actions"><button class="btn secondary wide" id="listen">🔊 Dinle</button></div>
    <div class="speedlab">
     <div class="speedtitle">⚡ Hızlı İngilizce Anlama</div>
     <div class="speedgrid">
@@ -244,7 +244,7 @@ function renderReview(){
  rows.sort((a,b)=>(a.it.next||0)-(b.it.next||0));
  $("reviewList").innerHTML=rows.length?rows.slice(0,12).map(r=>`<div class="reviewitem"><div><b>${r.l} · ${r.x[1]}</b><br><span>En iyi: %${r.it.best} · Aşama ${r.it.stage}</span></div><span>${r.it.next<=Date.now()?"Şimdi":"Sonra"}</span></div>`).join(""):'<div class="notice" style="margin-top:10px">Henüz tekrar kaydı yok. Konuşma dersine başlayın.</div>';
 }
-$("listen").onclick=()=>speakAt(selectedRate);$("slow").onclick=()=>speakAt(.62);
+$("listen").onclick=()=>speakAt(selectedRate);
 document.querySelectorAll(".speedbtn").forEach(b=>b.onclick=()=>{
  selectedRate=Number(b.dataset.rate);document.querySelectorAll(".speedbtn").forEach(x=>x.classList.toggle("on",x===b));speakAt(selectedRate);
 });
