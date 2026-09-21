@@ -86,7 +86,7 @@ h2{font-size:17px;margin:0 0 10px}.lesson{display:flex;gap:12px;align-items:cent
 <body>
 <div class="updatebar" id="updateBar">Yeni SpeakLoop sürümü hazır. <button id="updateNow">Güncelle</button></div>
 <div class="app">
- <div class="top"><div class="brand">🗣️ SpeakLoop <small id="appVersion">V8.1</small></div><div class="streak" id="streak">🔥 1 gün</div></div>
+ <div class="top"><div class="brand">🗣️ SpeakLoop <small id="appVersion">V8.2</small></div><div class="streak" id="streak">🔥 1 gün</div></div>
 
  <section id="home" class="screen active">
   <div class="card hero">
@@ -108,12 +108,12 @@ h2{font-size:17px;margin:0 0 10px}.lesson{display:flex;gap:12px;align-items:cent
 
     <div id="stepStory" class="lessonstep">
       <div class="stepicon">🎬</div><h2>Mini Senaryo</h2>
-      <p class="stephelp" id="storyText"></p>
+      <p class="stephelp" id="storyText"></p><div class="hint" id="storyPos"></div>
       <button class="btn primary wide bigaction" id="storyListen">🔊 Hikâyeyi Dinle</button>
       <div class="storytools"><button class="btn secondary" id="showMeaning">🇹🇷 Türkçe Anlam</button><button class="btn secondary" id="showWords">🔑 Kelimeler</button></div>
       <div class="storybox" id="storyMeaning"></div>
       <div class="storybox" id="storyWords"></div>
-      <button class="btn secondary wide nextstep" data-go="listen">Cümleye Geç →</button>
+      <button class="btn secondary wide" id="storyNext">Cümleleri Çalış →</button>
     </div>
 
     <div id="stepListen" class="lessonstep">
@@ -215,6 +215,34 @@ hotel:{tr:"Otelinize varıyor ve resepsiyonla konuşuyorsunuz. Durumu dinleyin, 
 shopping:{tr:"Bir mağazadasınız. Ürün, fiyat, beden, ödeme veya iade hakkında soru sormanız gerekiyor.",words:[["product","ürün"],["size","beden"],["payment","ödeme"],["return","iade"]]},
 food:{tr:"Bir kafe veya restorandasınız. Durumu dinleyin ve sipariş vermek ya da yardım istemek için doğal bir kalıp kullanın.",words:[["order","sipariş vermek"],["ask for help","yardım istemek"],["natural phrase","doğal kalıp"]]}
 };
+const STORY_PACKS={
+daily:[
+ {en:"You meet a colleague in the morning. She asks how you are. You smile and say hello. She tells you she is doing well and asks about you.",tr:"Sabah bir iş arkadaşınızla karşılaşıyorsunuz. Nasıl olduğunuzu soruyor. Gülümseyip selam veriyorsunuz. İyi olduğunu söylüyor ve sizi soruyor.",lines:[["Hey, how's it going?","Selam, nasıl gidiyor?"],["I'm good, thanks. How about you?","İyiyim, teşekkürler. Ya sen?"]]},
+ {en:"You are meeting a friend later today. You want to know if they have time. Your friend says they are already coming but may be a little late.",tr:"Bugün daha sonra bir arkadaşınızla buluşacaksınız. Vakti olup olmadığını öğrenmek istiyorsunuz. Arkadaşınız yolda olduğunu ama biraz gecikebileceğini söylüyor.",lines:[["Are you free later?","Daha sonra müsait misin?"],["I'm on my way.","Yoldayım."],["I'm running a little late.","Biraz gecikiyorum."]]}
+],
+travel:[
+ {en:"You are in a taxi in a new city. You are close to your destination and want to get out here. After that, you ask whether the place you need is far away.",tr:"Yeni bir şehirde taksidesiniz. Gideceğiniz yere yaklaştınız ve burada inmek istiyorsunuz. Ardından gitmeniz gereken yerin uzak olup olmadığını soruyorsunuz.",lines:[["Could you drop me off here?","Beni burada indirebilir misiniz?"],["Is it far from here?","Buradan uzak mı?"]]},
+ {en:"You have just arrived in a city for a short trip. You need to find your hotel and make sure you are going in the right direction.",tr:"Kısa bir seyahat için şehre yeni geldiniz. Otelinizi bulmanız ve doğru yönde gittiğinizden emin olmanız gerekiyor.",lines:[["Is it far from here?","Buradan uzak mı?"],["Could you drop me off here?","Beni burada indirebilir misiniz?"]]}
+],
+work:[
+ {en:"You are in a business meeting. A colleague explains an idea. You understand the point, but you are not fully convinced. You promise to reply before the day ends.",tr:"Bir iş toplantısındasınız. Bir iş arkadaşınız fikrini açıklıyor. Ne demek istediğini anlıyorsunuz ancak tamamen ikna olmadınız. Gün bitmeden dönüş yapacağınıza söz veriyorsunuz.",lines:[["I see what you mean, but I'm not totally convinced.","Ne demek istediğini anlıyorum ama tamamen ikna olmadım."],["I'll get back to you by the end of the day.","Gün sonuna kadar sana dönüş yapacağım."]]},
+ {en:"You are on an online call with a colleague. The connection breaks for a moment. After the call continues, you decide to solve the remaining details while you work.",tr:"Bir iş arkadaşınızla çevrim içi görüşmedesiniz. Bağlantı bir an kesiliyor. Görüşme devam edince kalan ayrıntıları ilerledikçe çözmeye karar veriyorsunuz.",lines:[["Sorry, you cut out for a second.","Üzgünüm, sesin bir an kesildi."],["Let's figure it out as we go.","İlerledikçe çözüm buluruz."]]}
+],
+hotel:[
+ {en:"You arrive at your hotel after a long journey. At reception, you check in and ask about breakfast because you want to know whether it is part of your room price.",tr:"Uzun bir yolculuktan sonra otelinize varıyorsunuz. Resepsiyonda giriş yapıyor ve kahvaltının oda fiyatına dahil olup olmadığını öğrenmek istiyorsunuz.",lines:[["Is breakfast included?","Kahvaltı dahil mi?"]]},
+ {en:"It is your first morning at the hotel. Before leaving for a meeting, you want to confirm what the hotel provides with your stay.",tr:"Oteldeki ilk sabahınız. Toplantıya gitmeden önce konaklamanıza hangi hizmetlerin dahil olduğunu doğrulamak istiyorsunuz.",lines:[["Is breakfast included?","Kahvaltı dahil mi?"]]}
+],
+shopping:[
+ {en:"You enter a clothing store while travelling. A salesperson asks if you need help, but you only want to look around for now.",tr:"Seyahatteyken bir giyim mağazasına giriyorsunuz. Satış görevlisi yardıma ihtiyacınız olup olmadığını soruyor ama şimdilik sadece bakmak istiyorsunuz.",lines:[["I'm just looking, thanks.","Sadece bakıyorum, teşekkürler."]]},
+ {en:"You are browsing in a shop and comparing a few products. Someone offers assistance, but you are not ready to buy anything yet.",tr:"Bir mağazada ürünlere bakıyor ve birkaç ürünü karşılaştırıyorsunuz. Biri yardım teklif ediyor ama henüz bir şey almaya hazır değilsiniz.",lines:[["I'm just looking, thanks.","Sadece bakıyorum, teşekkürler."]]}
+],
+food:[
+ {en:"You walk into a café and order a coffee. Your friend likes your choice and decides to order exactly the same thing.",tr:"Bir kafeye girip kahve sipariş ediyorsunuz. Arkadaşınız seçiminizi beğeniyor ve aynısından sipariş vermeye karar veriyor.",lines:[["Can I get a coffee, please?","Bir kahve alabilir miyim, lütfen?"],["I'll have the same, thanks.","Ben de aynısından alayım, teşekkürler."]]},
+ {en:"You finish dinner at a restaurant. Everyone is ready to leave, so you politely ask the server to bring the bill.",tr:"Restoranda akşam yemeğini bitiriyorsunuz. Herkes ayrılmaya hazır, bu yüzden garsondan nazikçe hesabı getirmesini istiyorsunuz.",lines:[["Could we get the bill, please?","Hesabı alabilir miyiz, lütfen?"]]}
+]
+};
+let storyIndex=0,storyLineIndex=0,activeStory=null;
+function storyPack(){let k=S.topic==="all"?["daily","travel","work","hotel","shopping","food"][S.idx%6]:S.topic;let a=STORY_PACKS[k]||STORY_PACKS.daily;return a[storyIndex%a.length]}
 const STORIES={
 all:"You are using English in a real situation. Listen first, understand the situation, then say the key sentence naturally.",
 daily:"You meet someone and have a short, friendly conversation. Listen to how people speak naturally, then answer.",
@@ -259,7 +287,10 @@ function topicMatch(x){
  return true;
 }
 function pool(){let p=LESSONS[S.level].filter(topicMatch);return p.length?p:LESSONS[S.level]}
-function current(){let p=pool();return p[S.idx%p.length]}
+function current(){
+ if(activeStory&&activeStory.lines&&activeStory.lines.length){let l=activeStory.lines[storyLineIndex%activeStory.lines.length];return ["🎬 Senaryo",l[0],l[1],l[0],"Bu cümle az önce dinlediğin mini senaryonun içinden."]; }
+ let p=pool();return p[S.idx%p.length]
+}
 function speak(rate){let x=current();if(!("speechSynthesis"in window)){ $("result").textContent="Sesli okuma bu ortamda desteklenmiyor.";return}speechSynthesis.cancel();let u=new SpeechSynthesisUtterance(x[1]);u.lang="en-US";u.rate=rate;speechSynthesis.speak(u)}
 
 let selectedRate=.88;
@@ -295,8 +326,9 @@ function setLessonStep(step){
  if(step==="speak")setTimeout(()=>$("dictateInput").focus(),120);
 }
 function renderPractice(){
- let x=current();$("scene").textContent=x[0];$("storyText").textContent=STORIES[S.topic]||STORIES.all;
- let sh=STORY_HELP[S.topic]||STORY_HELP.all;$("storyMeaning").textContent=sh.tr;$("storyWords").innerHTML='<div class="vocab">'+sh.words.map(w=>'<span><b>'+w[0]+'</b> → '+w[1]+'</span>').join("")+'</div>';$("storyMeaning").classList.remove("on");$("storyWords").classList.remove("on");$("target").textContent=x[1];$("speakTarget").textContent=x[1];$("translation").textContent=x[2];
+ activeStory=storyPack();storyLineIndex=0;
+ let x=current();$("scene").textContent=x[0];$("storyText").textContent=activeStory.en;$("storyPos").textContent="Senaryo "+((storyIndex%((STORY_PACKS[S.topic]||STORY_PACKS.daily).length))+1)+" • "+activeStory.lines.length+" cümle çalışılacak";
+ let sh=STORY_HELP[S.topic]||STORY_HELP.all;$("storyMeaning").textContent=activeStory.tr;$("storyWords").innerHTML='<div class="vocab">'+sh.words.map(w=>'<span><b>'+w[0]+'</b> → '+w[1]+'</span>').join("")+'</div>';$("storyMeaning").classList.remove("on");$("storyWords").classList.remove("on");$("target").textContent=x[1];$("speakTarget").textContent=x[1];$("translation").textContent=x[2];
  $("chunks").innerHTML=(x[3]||x[1]).split("/").map(s=>'<span class="modepill">'+s.trim()+'</span>').join("");
  $("naturalNote").textContent=x[4]||"Cümleyi anlam blokları halinde dinle.";
  $("heard").textContent="";$("result").textContent="";$("words").innerHTML="";$("dictateInput").value="";
@@ -316,7 +348,9 @@ function renderReview(){
  rows.sort((a,b)=>(a.it.next||0)-(b.it.next||0));
  $("reviewList").innerHTML=rows.length?rows.slice(0,12).map(r=>`<div class="reviewitem"><div><b>${r.l} · ${r.x[1]}</b><br><span>En iyi: %${r.it.best} · Aşama ${r.it.stage}</span></div><span>${r.it.next<=Date.now()?"Şimdi":"Sonra"}</span></div>`).join(""):'<div class="notice" style="margin-top:10px">Henüz tekrar kaydı yok. Konuşma dersine başlayın.</div>';
 }
-$("storyListen").onclick=()=>speakText(STORIES[S.topic]||STORIES.all,.88);
+$("storyListen").onclick=()=>speakText(activeStory?activeStory.en:(STORIES[S.topic]||STORIES.all),.88);
+$("storyNext").onclick=()=>{storyLineIndex=0;renderStoryLine();setLessonStep("listen")};
+function renderStoryLine(){let x=current();$("scene").textContent=x[0];$("target").textContent=x[1];$("speakTarget").textContent=x[1];$("translation").textContent=x[2];$("chunks").innerHTML=x[1].split(/[,?.!]/).filter(Boolean).map(s=>'<span class="modepill">'+s.trim()+'</span>').join("");$("naturalNote").textContent="Mini senaryodan cümle "+(storyLineIndex+1)+"/"+activeStory.lines.length;$("dictateInput").value="";$("result").textContent="";$("words").innerHTML=""}
 $("showMeaning").onclick=()=>$("storyMeaning").classList.toggle("on");
 $("showWords").onclick=()=>$("storyWords").classList.toggle("on");
 $("listenBlind").onclick=()=>speakAt(selectedRate);
@@ -325,8 +359,8 @@ document.querySelectorAll(".speedcompact button").forEach(b=>b.onclick=()=>{
 });
 document.querySelectorAll(".nextstep").forEach(b=>b.onclick=()=>setLessonStep(b.dataset.go));
 $("shadow").onclick=()=>speakAt(selectedRate);
-$("again").onclick=()=>{renderPractice();setLessonStep("listen")};
-$("next").onclick=()=>{S.idx=(S.idx+1)%pool().length;S.minutes=(S.minutes||0)+.5;save();renderPractice();renderHome()};
+$("again").onclick=()=>{renderStoryLine();setLessonStep("listen")};
+$("next").onclick=()=>{S.minutes=(S.minutes||0)+.5;if(activeStory&&storyLineIndex<activeStory.lines.length-1){storyLineIndex++;save();renderStoryLine();setLessonStep("listen");setTimeout(()=>speakAt(selectedRate),120)}else{storyIndex++;S.idx=(S.idx+1)%pool().length;save();renderPractice();renderHome()}};
 $("startLesson").onclick=()=>{showScreen("practice");renderPractice();setTimeout(()=>$("storyListen").click(),180)};
 document.querySelectorAll(".navbtn").forEach(b=>b.onclick=()=>showScreen(b.dataset.screen));
 $("reviewNow").onclick=()=>{
