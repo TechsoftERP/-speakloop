@@ -27,6 +27,7 @@ h2{font-size:17px;margin:0 0 10px}.lesson{display:flex;gap:12px;align-items:cent
 .wordrow{display:flex;gap:5px;flex-wrap:wrap;justify-content:center;margin-top:8px}.word{padding:4px 7px;border-radius:7px;background:#e9f7ef;color:#14754e;font-size:12px}.word.miss{background:#fdecec;color:#a93434}
 .actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}.actions .wide{grid-column:1/-1}
 .levelrow{display:flex;gap:6px;overflow:auto;padding-bottom:3px}.level{min-width:58px;border:1px solid var(--line);background:white;border-radius:13px;padding:10px;font-weight:850}.level.on{background:var(--blue);color:white}
+.storypick{display:block;width:100%;text-align:left;border:1px solid var(--line);background:#fff;border-radius:13px;padding:10px;margin:6px 0;font:inherit}.storypick.on{border-color:var(--blue);background:var(--soft)}.storypick b{display:block}.storypick span{font-size:11px;color:var(--muted)}
 .reviewitem{display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--line);padding:10px 0}.reviewitem:first-of-type{border-top:0}.reviewitem span{font-size:12px;color:var(--muted)}
 .bottom{position:fixed;left:0;right:0;bottom:0;background:#fffc;border-top:1px solid var(--line);backdrop-filter:blur(16px);padding:7px 10px calc(7px + env(safe-area-inset-bottom));display:flex;justify-content:center;z-index:20}.bottomin{width:min(620px,100%);display:grid;grid-template-columns:repeat(3,1fr);gap:5px}.navbtn{border:0;background:transparent;padding:7px;font-size:10px;font-weight:800;color:#697386}.navbtn b{display:block;font-size:21px;margin-bottom:2px}.navbtn.on{color:var(--blue)}
 .notice{font-size:11px;color:var(--muted);line-height:1.45;background:#f7f8fb;padding:10px;border-radius:12px}
@@ -86,7 +87,7 @@ h2{font-size:17px;margin:0 0 10px}.lesson{display:flex;gap:12px;align-items:cent
 <body>
 <div class="updatebar" id="updateBar">Yeni SpeakLoop sürümü hazır. <button id="updateNow">Güncelle</button></div>
 <div class="app">
- <div class="top"><div class="brand">🗣️ SpeakLoop <small id="appVersion">V9.2</small></div><div class="streak" id="streak">🔥 1 gün</div></div>
+ <div class="top"><div class="brand">🗣️ SpeakLoop <small id="appVersion">V10</small></div><div class="streak" id="streak">🔥 1 gün</div></div>
 
  <section id="home" class="screen active">
   <div class="card hero">
@@ -97,6 +98,7 @@ h2{font-size:17px;margin:0 0 10px}.lesson{display:flex;gap:12px;align-items:cent
   <div class="card"><h2>Bugünkü Akıllı Ders</h2><div class="lesson"><div class="lessonicon">☕</div><div class="lessoncopy"><b id="homeTitle">A1 • Günlük İngilizce</b><span>Dinleme → hızlı konuşma → shadowing → üretim → hafıza tekrarı.</span></div></div><button class="btn primary wide" style="margin-top:14px" id="startLesson">Derse Başla →</button></div>
   
 <div class="card"><h2>Ne çalışmak istiyorsun?</h2><div class="levelrow" id="topics"></div></div>
+<div class="card" id="storyLibraryCard"><h2>📚 Mini Story Seç</h2><div id="storyLibrary"></div><button class="btn secondary wide" id="addStoryBtn" style="margin-top:8px">＋ Dışarıdan Story Ekle</button><div id="addStoryBox" style="display:none;margin-top:8px"><input id="customStoryTitle" class="dictate" placeholder="Story başlığı"><textarea id="customStoryEn" class="dictate" style="margin-top:6px" placeholder="İngilizce story'yi buraya yapıştır. Her cümle ayrı çalıştırılır."></textarea><textarea id="customStoryTr" class="dictate" style="margin-top:6px" placeholder="Türkçe çeviri (isteğe bağlı)"></textarea><button class="btn primary wide" id="saveStory" style="margin-top:6px">Story'yi Kaydet</button></div></div>
 <div class="card"><h2>Seviye</h2><div class="levelrow" id="levels"></div></div>
   
  </section>
@@ -252,7 +254,8 @@ food:[
 let storyIndex=0,storyLineIndex=0,activeStory=null;
 function splitStory(s){return String(s||"").match(/[^.!?]+[.!?]+|[^.!?]+$/g)?.map(x=>x.trim()).filter(Boolean)||[]}
 function exactStory(story){let en=splitStory(story.en),tr=splitStory(story.tr);return Object.assign({},story,{lines:en.map((x,i)=>[x,tr[i]||story.tr])})}
-function storyPack(){if(S.topic==="all")return null;let a=STORY_PACKS[S.topic]||STORY_PACKS.daily;return exactStory(a[storyIndex%a.length])}
+function topicStories(){if(S.topic==="all")return [];let built=(STORY_PACKS[S.topic]||[]).map((s,i)=>Object.assign({title:"Story "+(i+1),custom:false},s));let custom=(S.customStories&&S.customStories[S.topic]||[]).map((s,i)=>Object.assign({title:s.title||"Ek Story "+(i+1),custom:true},s));return built.concat(custom)}
+function storyPack(){if(S.topic==="all")return null;let a=topicStories();if(!a.length)return null;let chosen=(S.storyChoice&&Number.isInteger(S.storyChoice[S.topic]))?S.storyChoice[S.topic]:storyIndex%a.length;storyIndex=chosen%a.length;return exactStory(a[storyIndex])}
 const STORIES={
 all:"You are using English in a real situation. Listen first, understand the situation, then say the key sentence naturally.",
 daily:"You meet someone and have a short, friendly conversation. Listen to how people speak naturally, then answer.",
@@ -262,7 +265,7 @@ hotel:"You arrive at your hotel and speak with reception. Listen to the situatio
 shopping:"You are in a shop and need to ask about a product, price, size, payment, or return.",
 food:"You are at a café or restaurant. Listen to the situation and use a natural phrase to order or ask for help."
 };
-let S={level:"A1",topic:"all",idx:0,xp:0,items:{},minutes:0,lastDay:"",streak:1};
+let S={level:"A1",topic:"all",idx:0,xp:0,items:{},minutes:0,lastDay:"",streak:1,customStories:{},storyChoice:{}};
 try{let x=localStorage.getItem("speakloopV5");if(x)S=Object.assign(S,JSON.parse(x))}catch(e){} storyIndex=Number(S.storyIndex||0);
 const $=id=>document.getElementById(id), key=(l,i)=>l+"-"+i, dayms=86400000;
 function save(){try{localStorage.setItem("speakloopV5",JSON.stringify(S))}catch(e){}}
@@ -319,13 +322,18 @@ function shadow(){
  });
 }
 function showScreen(id){document.querySelectorAll(".screen").forEach(x=>x.classList.remove("active"));$(id).classList.add("active");document.querySelectorAll(".navbtn").forEach(x=>x.classList.toggle("on",x.dataset.screen===id));if(id==="review")renderReview()}
+function renderStoryLibrary(){
+ let card=$("storyLibraryCard");if(S.topic==="all"){card.style.display="none";return}card.style.display="block";
+ let arr=topicStories();$("storyLibrary").innerHTML=arr.map((s,i)=>'<button class="storypick '+(i===storyIndex?'on':'')+'" data-story="'+i+'"><b>🎬 '+s.title+'</b><span>'+splitStory(s.en).length+' cümle'+(s.custom?' · Eklenen Story':'')+'</span></button>').join("");
+ document.querySelectorAll("[data-story]").forEach(b=>b.onclick=()=>{storyIndex=Number(b.dataset.story);S.storyChoice=S.storyChoice||{};S.storyChoice[S.topic]=storyIndex;S.storyIndex=storyIndex;save();renderStoryLibrary();showScreen("practice");renderPractice()});
+}
 function renderHome(){
  $("xp").textContent=S.xp;let vals=Object.values(S.items);$("mastered").textContent=vals.filter(x=>x.stage>=4).length;$("due").textContent=vals.filter(x=>x.next&&x.next<=Date.now()).length;
  $("dailyBar").style.width=Math.min(100,(S.minutes||0)/10*100)+"%";let tn=(TOPICS.find(t=>t[2]===S.topic)||TOPICS[0])[1];$("homeTitle").textContent=S.level+" • "+tn;
  $("levels").innerHTML=LEVELS.map(l=>`<button class="level ${S.level===l?"on":""}" data-l="${l}">${l}</button>`).join("");
  document.querySelectorAll(".level").forEach(b=>b.onclick=()=>{S.level=b.dataset.l;S.idx=0;save();renderHome();renderPractice()});
  $("topics").innerHTML=TOPICS.map(t=>`<button class="level ${S.topic===t[2]?"on":""}" data-topic="${t[2]}">${t[0]} ${t[1]}</button>`).join("");
- document.querySelectorAll("[data-topic]").forEach(b=>b.onclick=()=>{S.topic=b.dataset.topic;S.idx=0;save();renderHome();renderPractice()});
+ document.querySelectorAll("[data-topic]").forEach(b=>b.onclick=()=>{S.topic=b.dataset.topic;S.idx=0;storyIndex=(S.storyChoice&&Number.isInteger(S.storyChoice[S.topic]))?S.storyChoice[S.topic]:0;save();renderHome();renderPractice()});renderStoryLibrary();
 }
 let lessonStep="story";
 function setLessonStep(step){
@@ -361,6 +369,8 @@ function renderReview(){
  rows.sort((a,b)=>(a.it.next||0)-(b.it.next||0));
  $("reviewList").innerHTML=rows.length?rows.slice(0,12).map(r=>`<div class="reviewitem"><div><b>${r.l} · ${r.x[1]}</b><br><span>En iyi: %${r.it.best} · Aşama ${r.it.stage}</span></div><span>${r.it.next<=Date.now()?"Şimdi":"Sonra"}</span></div>`).join(""):'<div class="notice" style="margin-top:10px">Henüz tekrar kaydı yok. Konuşma dersine başlayın.</div>';
 }
+$("addStoryBtn").onclick=()=>{$("addStoryBox").style.display=$("addStoryBox").style.display==="none"?"block":"none"};
+$("saveStory").onclick=()=>{let en=$("customStoryEn").value.trim(),tr=$("customStoryTr").value.trim(),title=$("customStoryTitle").value.trim();if(!en){alert("İngilizce story metnini girin.");return}S.customStories=S.customStories||{};S.customStories[S.topic]=S.customStories[S.topic]||[];S.customStories[S.topic].push({title:title||"Benim Story'm",en:en,tr:tr||"Türkçe çeviri eklenmedi."});storyIndex=topicStories().length-1;S.storyChoice=S.storyChoice||{};S.storyChoice[S.topic]=storyIndex;S.storyIndex=storyIndex;save();$("customStoryTitle").value="";$("customStoryEn").value="";$("customStoryTr").value="";$("addStoryBox").style.display="none";renderHome();showScreen("practice");renderPractice()};
 $("storyListen").onclick=()=>{if(activeStory)speakText(activeStory.en,.88)};
 $("storyNext").onclick=()=>{storyLineIndex=0;renderStoryLine();setLessonStep("listen")};
 function renderStoryLine(){let x=current();$("roleTr").textContent="Türkçe niyet: "+x[2];$("rolePrompt").textContent="Ekrandaki Türkçe niyeti İngilizce olarak söyle. Örnek cümleyi hatırlamaya çalış.";$("roleInput").value="";$("scene").textContent=x[0];$("target").textContent=x[1];$("speakTarget").textContent=x[1];$("translation").textContent=x[2];$("chunks").innerHTML=x[1].split(/[,?.!]/).filter(Boolean).map(s=>'<span class="modepill">'+s.trim()+'</span>').join("");$("naturalNote").textContent="Mini senaryodan cümle "+(storyLineIndex+1)+"/"+activeStory.lines.length;$("dictateInput").value="";$("result").textContent="";$("words").innerHTML=""}
@@ -374,7 +384,7 @@ document.querySelectorAll(".speedcompact button").forEach(b=>b.onclick=()=>{
 document.querySelectorAll(".nextstep").forEach(b=>b.onclick=()=>setLessonStep(b.dataset.go));
 $("shadow").onclick=()=>speakAt(selectedRate);
 $("again").onclick=()=>{renderStoryLine();setLessonStep("listen")};
-$("next").onclick=()=>{S.minutes=(S.minutes||0)+.5;if(activeStory&&storyLineIndex<activeStory.lines.length-1){storyLineIndex++;save();renderStoryLine();setLessonStep("listen");setTimeout(()=>speakAt(selectedRate),120)}else{if(activeStory){storyIndex++;S.storyIndex=storyIndex}S.idx=(S.idx+1)%pool().length;save();renderPractice();renderHome()}};
+$("next").onclick=()=>{S.minutes=(S.minutes||0)+.5;if(activeStory&&storyLineIndex<activeStory.lines.length-1){storyLineIndex++;save();renderStoryLine();setLessonStep("listen");setTimeout(()=>speakAt(selectedRate),120)}else{if(activeStory){let n=topicStories().length;storyIndex=n?(storyIndex+1)%n:0;S.storyIndex=storyIndex;S.storyChoice=S.storyChoice||{};S.storyChoice[S.topic]=storyIndex}S.idx=(S.idx+1)%pool().length;save();renderPractice();renderHome()}};
 $("startLesson").onclick=()=>{showScreen("practice");renderPractice();if(S.topic!=="all")setTimeout(()=>$("storyListen").click(),180)};
 document.querySelectorAll(".navbtn").forEach(b=>b.onclick=()=>showScreen(b.dataset.screen));
 $("reviewNow").onclick=()=>{
