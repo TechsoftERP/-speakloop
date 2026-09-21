@@ -87,7 +87,7 @@ h2{font-size:17px;margin:0 0 10px}.lesson{display:flex;gap:12px;align-items:cent
 <body>
 <div class="updatebar" id="updateBar">Yeni SpeakLoop sürümü hazır. <button id="updateNow">Güncelle</button></div>
 <div class="app">
- <div class="top"><div class="brand">🗣️ SpeakLoop <small id="appVersion">V11</small></div><div class="streak" id="streak">🔥 1 gün</div></div>
+ <div class="top"><div class="brand">🗣️ SpeakLoop <small id="appVersion">V11.1</small></div><div class="streak" id="streak">🔥 1 gün</div></div>
 
  <section id="home" class="screen active">
   <div class="card hero">
@@ -146,10 +146,10 @@ h2{font-size:17px;margin:0 0 10px}.lesson{display:flex;gap:12px;align-items:cent
 
     <div id="stepRole" class="lessonstep">
       <div class="stepicon">🎭</div><h2>Rol Yap</h2>
-      <p class="stephelp" id="rolePrompt">Gerçek diyalog: cevabı İngilizce kendin üret.</p><div class="chunkbox" id="dialoguePartner"></div>
+      <p class="stephelp" id="rolePrompt">Gerçek diyalog: cevabı İngilizce kendin üret.</p><div class="chunkbox" id="dialoguePartner"></div><div class="hint" id="rapidTimer"></div>
       <div class="sentence"><div class="tr" id="roleTr"></div></div>
       <input id="roleInput" class="dictate" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="Klavye 🎤 ile cevabını söyle">
-      <button class="btn primary wide bigaction" id="roleCheck">✓ Cevabımı Kontrol Et</button>
+      <button class="btn primary wide bigaction" id="roleCheck">✓ Cevabımı Kontrol Et</button><button class="btn secondary wide" id="rapidStart" style="margin-top:7px">⚡ 3 Saniyede Cevap</button>
     </div>
 
     <div id="stepResult" class="lessonstep">
@@ -288,6 +288,11 @@ function recordMistakes(spoken,score){
  save();
 }
 function weakForTopic(){return Object.values(S.mistakes||{}).filter(m=>m.level===S.level&&m.topic===S.topic&&m.nextStory).sort((a,b)=>(b.count||0)-(a.count||0))[0]||null}
+function rapidRecall(){
+ clearInterval(rapidClock);let n=3;$("rapidTimer").textContent="⚡ "+n+"…";$("roleInput").value="";
+ $("speakTarget").textContent="";$("target").textContent="";
+ rapidClock=setInterval(()=>{n--;if(n>0){$("rapidTimer").textContent="⚡ "+n+"…"}else{clearInterval(rapidClock);$("rapidTimer").textContent="🎤 Şimdi cevapla!";$("roleInput").focus()}},1000)
+}
 function dialoguePrompt(){
  let x=current(),q={hotel:"Receptionist: Good evening. How can I help you?",food:"Server: Hi! What can I get for you?",shopping:"Salesperson: Can I help you with anything?",travel:"Local: Hi. Where are you trying to go?",work:"Colleague: What do you think about this?",daily:"Friend: Hey! How's it going?"};
  return q[S.topic]||"Partner: What would you say in this situation?";
@@ -322,7 +327,7 @@ function storyWords(story){let stop=new Set("the a an and or but you your are is
 
 function speak(rate){let x=current();if(!("speechSynthesis"in window)){ $("result").textContent="Sesli okuma bu ortamda desteklenmiyor.";return}speechSynthesis.cancel();let u=new SpeechSynthesisUtterance(x[1]);u.lang="en-US";u.rate=rate;speechSynthesis.speak(u)}
 
-let selectedRate=.88;
+let selectedRate=.88,rapidClock=null;
 function speakText(text,rate,cb){if(!("speechSynthesis" in window))return;speechSynthesis.cancel();let u=new SpeechSynthesisUtterance(text);u.lang="en-US";u.rate=rate||selectedRate;if(cb)u.onend=cb;speechSynthesis.speak(u)}
 function speakAt(rate, cb){
  let x=current(); if(!("speechSynthesis" in window))return;
@@ -387,10 +392,11 @@ $("addStoryBtn").onclick=()=>{$("addStoryBox").style.display=$("addStoryBox").st
 $("saveStory").onclick=()=>{let en=$("customStoryEn").value.trim(),tr=$("customStoryTr").value.trim(),title=$("customStoryTitle").value.trim();if(!en){alert("İngilizce story metnini girin.");return}S.customStories=S.customStories||{};S.customStories[storyGroupKey()]=S.customStories[storyGroupKey()]||[];S.customStories[storyGroupKey()].push({title:title||"Benim Story'm",en:en,tr:tr||"Türkçe çeviri eklenmedi."});storyIndex=topicStories().length-1;S.storyChoice=S.storyChoice||{};S.storyChoice[storyGroupKey()]=storyIndex;S.storyIndex=storyIndex;save();$("customStoryTitle").value="";$("customStoryEn").value="";$("customStoryTr").value="";$("addStoryBox").style.display="none";renderHome();showScreen("practice");renderPractice()};
 $("storyListen").onclick=()=>{if(activeStory)speakText(activeStory.en,.88)};
 $("storyNext").onclick=()=>{storyLineIndex=0;renderStoryLine();setLessonStep("listen")};
-function renderStoryLine(){let x=current(),weak=weakForTopic();$("dialoguePartner").textContent=dialoguePrompt();$("roleTr").textContent="Türkçe niyet: "+x[2];$("rolePrompt").textContent=weak?"Gerçek diyalog · Önceki zayıf kalıbın yeni Story’de tekrar karşına çıkacak.":"Gerçek diyalog · Hazır İngilizce cevap yok; kendin üret.";$("mistakeBox").style.display="none";$("roleInput").value="";$("scene").textContent=x[0];$("target").textContent=x[1];$("speakTarget").textContent=x[1];$("translation").textContent=x[2];$("chunks").innerHTML=x[1].split(/[,?.!]/).filter(Boolean).map(s=>'<span class="modepill">'+s.trim()+'</span>').join("");$("naturalNote").textContent="Mini senaryodan cümle "+(storyLineIndex+1)+"/"+activeStory.lines.length;$("dictateInput").value="";$("result").textContent="";$("words").innerHTML=""}
+function renderStoryLine(){let x=current(),weak=weakForTopic();clearInterval(rapidClock);$("rapidTimer").textContent="";$("dialoguePartner").textContent=dialoguePrompt();$("roleTr").textContent="Türkçe niyet: "+x[2];$("rolePrompt").textContent=weak?"Gerçek diyalog · Önceki zayıf kalıbın yeni Story’de tekrar karşına çıkacak.":"Gerçek diyalog · Hazır İngilizce cevap yok; kendin üret.";$("mistakeBox").style.display="none";$("roleInput").value="";$("scene").textContent=x[0];$("target").textContent=x[1];$("speakTarget").textContent=x[1];$("translation").textContent=x[2];$("chunks").innerHTML=x[1].split(/[,?.!]/).filter(Boolean).map(s=>'<span class="modepill">'+s.trim()+'</span>').join("");$("naturalNote").textContent="Mini senaryodan cümle "+(storyLineIndex+1)+"/"+activeStory.lines.length;$("dictateInput").value="";$("result").textContent="";$("words").innerHTML=""}
 $("showMeaning").onclick=()=>$("storyMeaning").classList.toggle("on");
 $("showWords").onclick=()=>$("storyWords").classList.toggle("on");
-$("roleCheck").onclick=()=>{let t=$("roleInput").value.trim();if(!t){$("rolePrompt").textContent="Önce cevabını İngilizce söyle.";return}let sc=similarity(current()[1],t);paintWords(t);recordMistakes(t,sc);updateMemory(sc);let weak=weakForTopic();$("result").className="result "+(sc>=70?"good":"bad");$("result").innerHTML=sc>=90?`<span class="scorebig">${sc}%</span><br>🏆 Doğal ve doğru cevap`:sc>=70?`<span class="scorebig">${sc}%</span><br>👍 Anlaşılır cevap`:`<span class="scorebig">${sc}%</span><br>🔁 Örnek cevabı incele ve tekrar dene`;if(weak){$("mistakeBox").style.display="block";$("mistakeBox").innerHTML="<b>🧠 Hata Hafızası</b><br>Zayıf kelime/kalıp: "+(weak.missing||[]).join(", ")+"<br><small>Bu konu sonraki Story'de tekrar hatırlatılacak.</small>"}setLessonStep("result")};
+$("rapidStart").onclick=rapidRecall;
+$("roleCheck").onclick=()=>{let t=$("roleInput").value.trim();if(!t){$("rolePrompt").textContent="Önce cevabını İngilizce söyle.";return}let sc=similarity(current()[1],t);paintWords(t);recordMistakes(t,sc);updateMemory(sc);let weak=weakForTopic();$("result").className="result "+(sc>=70?"good":"bad");$("result").innerHTML=sc>=90?`<span class="scorebig">${sc}%</span><br>🏆 Doğal ve doğru cevap`:sc>=70?`<span class="scorebig">${sc}%</span><br>👍 Anlaşılır cevap`:`<span class="scorebig">${sc}%</span><br>🔁 Örnek cevabı incele ve tekrar dene`;if(weak){$("mistakeBox").style.display="block";$("mistakeBox").innerHTML="<b>🧠 Hata Hafızası</b><br>Zayıf kelime/kalıp: "+(weak.missing||[]).join(", ")+"<br><small>Bu konu sonraki Story’de tekrar hatırlatılacak.</small>"}setLessonStep("result")};
 $("listenBlind").onclick=()=>speakAt(selectedRate);
 document.querySelectorAll(".speedcompact button").forEach(b=>b.onclick=()=>{
  selectedRate=Number(b.dataset.rate);document.querySelectorAll(".speedcompact button").forEach(x=>x.classList.toggle("on",x===b));speakAt(selectedRate);
