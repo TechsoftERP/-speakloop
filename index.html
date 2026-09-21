@@ -74,7 +74,7 @@ h2{font-size:17px;margin:0 0 10px}.lesson{display:flex;gap:12px;align-items:cent
 
 .focuscard{min-height:calc(100vh - 125px);display:flex;flex-direction:column;justify-content:flex-start}
 .focushead{display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:850;color:var(--muted)}
-.focushead .scene{margin:0}.stepbar{height:5px;background:#edf0f5;border-radius:9px;margin:8px 0 14px;overflow:hidden}.stepbar i{display:block;height:100%;width:20%;background:var(--blue);transition:.2s}
+.focushead .scene{margin:0}.stepbar{height:5px;background:#edf0f5;border-radius:9px;margin:8px 0 14px;overflow:hidden}.stepbar i{display:block;height:100%;width:16.67%;background:var(--blue);transition:.2s}
 .lessonstep{display:none;text-align:center}.lessonstep.on{display:block}.stepicon{font-size:42px;margin:7px 0}.lessonstep h2{font-size:22px;margin:4px 0}.stephelp{color:var(--muted);font-size:13px;margin:5px 0 20px}.bigaction{min-height:54px;font-size:16px;margin-top:10px}
 .nextstep{margin-top:10px}
 .storytools{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:8px 0}.storytools .btn{min-height:38px;font-size:11px;padding:7px}.storybox{display:none;text-align:left;background:#f7f8fb;border-radius:13px;padding:10px;margin:7px 0;font-size:12px;line-height:1.5}.storybox.on{display:block}.vocab{display:flex;gap:5px;flex-wrap:wrap}.vocab span{background:#eef2ff;color:#3653ad;border-radius:9px;padding:5px 7px;font-weight:750}.speedcompact{display:flex;align-items:center;justify-content:center;gap:5px;margin:12px 0;font-size:11px;color:var(--muted)}
@@ -86,7 +86,7 @@ h2{font-size:17px;margin:0 0 10px}.lesson{display:flex;gap:12px;align-items:cent
 <body>
 <div class="updatebar" id="updateBar">Yeni SpeakLoop sürümü hazır. <button id="updateNow">Güncelle</button></div>
 <div class="app">
- <div class="top"><div class="brand">🗣️ SpeakLoop <small id="appVersion">V8.2</small></div><div class="streak" id="streak">🔥 1 gün</div></div>
+ <div class="top"><div class="brand">🗣️ SpeakLoop <small id="appVersion">V9</small></div><div class="streak" id="streak">🔥 1 gün</div></div>
 
  <section id="home" class="screen active">
   <div class="card hero">
@@ -103,7 +103,7 @@ h2{font-size:17px;margin:0 0 10px}.lesson{display:flex;gap:12px;align-items:cent
 
  <section id="practice" class="screen">
   <div class="card focuscard">
-    <div class="focushead"><span class="scene" id="scene"></span><span id="stepCount">1/5</span></div>
+    <div class="focushead"><span class="scene" id="scene"></span><span id="stepCount">1/6</span></div>
     <div class="stepbar"><i id="stepBar"></i></div>
 
     <div id="stepStory" class="lessonstep">
@@ -113,6 +113,7 @@ h2{font-size:17px;margin:0 0 10px}.lesson{display:flex;gap:12px;align-items:cent
       <div class="storytools"><button class="btn secondary" id="showMeaning">🇹🇷 Türkçe Anlam</button><button class="btn secondary" id="showWords">🔑 Kelimeler</button></div>
       <div class="storybox" id="storyMeaning"></div>
       <div class="storybox" id="storyWords"></div>
+      <div class="storybox on" id="videoStory"><b>🎥 Video Story</b><br><span id="videoStatus">Bu senaryo için interaktif video akışı hazır.</span><div class="storytools"><button class="btn secondary" id="videoPlay">▶️ Sahneyi Oynat</button><button class="btn secondary" id="rolePlay">🎭 Rol Yap</button></div></div>
       <button class="btn secondary wide" id="storyNext">Cümleleri Çalış →</button>
     </div>
 
@@ -140,6 +141,14 @@ h2{font-size:17px;margin:0 0 10px}.lesson{display:flex;gap:12px;align-items:cent
       <input id="dictateInput" class="dictate" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="Buraya dokun → klavye 🎤 → İngilizce konuş">
       <button class="btn primary wide bigaction" id="checkDictation">✓ Kontrol Et</button>
       <div class="heard" id="heard" style="display:none"></div>
+    </div>
+
+    <div id="stepRole" class="lessonstep">
+      <div class="stepicon">🎭</div><h2>Rol Yap</h2>
+      <p class="stephelp" id="rolePrompt">Duruma uygun İngilizce cevabı kendin üret.</p>
+      <div class="sentence"><div class="tr" id="roleTr"></div></div>
+      <input id="roleInput" class="dictate" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="Klavye 🎤 ile cevabını söyle">
+      <button class="btn primary wide bigaction" id="roleCheck">✓ Cevabımı Kontrol Et</button>
     </div>
 
     <div id="stepResult" class="lessonstep">
@@ -318,12 +327,12 @@ function renderHome(){
 let lessonStep="story";
 function setLessonStep(step){
  lessonStep=step;
- const ids={story:"stepStory",listen:"stepListen",shadow:"stepShadow",speak:"stepSpeak",result:"stepResult"};
+ const ids={story:"stepStory",listen:"stepListen",shadow:"stepShadow",speak:"stepSpeak",role:"stepRole",result:"stepResult"};
  Object.values(ids).forEach(id=>$(id).classList.remove("on"));
  $(ids[step]).classList.add("on");
- const n={story:1,listen:2,shadow:3,speak:4,result:5}[step];
- $("stepCount").textContent=n+"/5";$("stepBar").style.width=(n*20)+"%";
- if(step==="speak")setTimeout(()=>$("dictateInput").focus(),120);
+ const n={story:1,listen:2,shadow:3,speak:4,role:5,result:6}[step];
+ $("stepCount").textContent=n+"/6";$("stepBar").style.width=(n*16.67)+"%";
+ if(step==="speak")setTimeout(()=>$("dictateInput").focus(),120);if(step==="role")setTimeout(()=>$("roleInput").focus(),120);
 }
 function renderPractice(){
  activeStory=storyPack();storyLineIndex=0;
@@ -341,7 +350,7 @@ function grade(spoken){
  let sc=similarity(current()[1],spoken);paintWords(spoken);updateMemory(sc);
  $("result").className="result "+(sc>=75?"good":"bad");
  $("result").innerHTML=sc>=90?`<span class="scorebig">${sc}%</span><br>🏆 Mükemmel · Hafızaya alındı`:sc>=75?`<span class="scorebig">${sc}%</span><br>👍 İyi · Bir kez daha söyle`: `<span class="scorebig">${sc}%</span><br>🔁 Tekrar gerekli · Eksik kelimelere bak`;
- renderHome();setLessonStep("result")
+ renderHome();setLessonStep("role")
 }
 function renderReview(){
  let rows=[];LEVELS.forEach(l=>LESSONS[l].forEach((x,i)=>{let it=S.items[key(l,i)];if(it&&it.tries)rows.push({l,i,x,it})}));
@@ -350,9 +359,12 @@ function renderReview(){
 }
 $("storyListen").onclick=()=>speakText(activeStory?activeStory.en:(STORIES[S.topic]||STORIES.all),.88);
 $("storyNext").onclick=()=>{storyLineIndex=0;renderStoryLine();setLessonStep("listen")};
-function renderStoryLine(){let x=current();$("scene").textContent=x[0];$("target").textContent=x[1];$("speakTarget").textContent=x[1];$("translation").textContent=x[2];$("chunks").innerHTML=x[1].split(/[,?.!]/).filter(Boolean).map(s=>'<span class="modepill">'+s.trim()+'</span>').join("");$("naturalNote").textContent="Mini senaryodan cümle "+(storyLineIndex+1)+"/"+activeStory.lines.length;$("dictateInput").value="";$("result").textContent="";$("words").innerHTML=""}
+function renderStoryLine(){let x=current();$("roleTr").textContent="Türkçe niyet: "+x[2];$("rolePrompt").textContent="Ekrandaki Türkçe niyeti İngilizce olarak söyle. Örnek cümleyi hatırlamaya çalış.";$("roleInput").value="";$("scene").textContent=x[0];$("target").textContent=x[1];$("speakTarget").textContent=x[1];$("translation").textContent=x[2];$("chunks").innerHTML=x[1].split(/[,?.!]/).filter(Boolean).map(s=>'<span class="modepill">'+s.trim()+'</span>').join("");$("naturalNote").textContent="Mini senaryodan cümle "+(storyLineIndex+1)+"/"+activeStory.lines.length;$("dictateInput").value="";$("result").textContent="";$("words").innerHTML=""}
 $("showMeaning").onclick=()=>$("storyMeaning").classList.toggle("on");
 $("showWords").onclick=()=>$("storyWords").classList.toggle("on");
+$("videoPlay").onclick=()=>{let s=activeStory?activeStory.en:"";$("videoStatus").textContent="🎬 Sahne oynuyor: önce bağlamı dinle, sonra karakterin yerine sen konuş.";speakText(s,.92)};
+$("rolePlay").onclick=()=>{storyLineIndex=0;renderStoryLine();setLessonStep("role")};
+$("roleCheck").onclick=()=>{let t=$("roleInput").value.trim();if(!t){$("rolePrompt").textContent="Önce cevabını İngilizce söyle.";return}let sc=similarity(current()[1],t);paintWords(t);updateMemory(sc);$("result").className="result "+(sc>=70?"good":"bad");$("result").innerHTML=sc>=90?`<span class="scorebig">${sc}%</span><br>🏆 Doğal ve doğru cevap`:sc>=70?`<span class="scorebig">${sc}%</span><br>👍 Anlaşılır cevap`:`<span class="scorebig">${sc}%</span><br>🔁 Örnek cevabı incele ve tekrar dene`;setLessonStep("result")};
 $("listenBlind").onclick=()=>speakAt(selectedRate);
 document.querySelectorAll(".speedcompact button").forEach(b=>b.onclick=()=>{
  selectedRate=Number(b.dataset.rate);document.querySelectorAll(".speedcompact button").forEach(x=>x.classList.toggle("on",x===b));speakAt(selectedRate);
