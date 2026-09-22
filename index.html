@@ -81,13 +81,17 @@ h2{font-size:17px;margin:0 0 10px}.lesson{display:flex;gap:12px;align-items:cent
 .storytools{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:8px 0}.storytools .btn{min-height:38px;font-size:11px;padding:7px}.storybox{display:none;text-align:left;background:#f7f8fb;border-radius:13px;padding:10px;margin:7px 0;font-size:12px;line-height:1.5}.storybox.on{display:block}.vocab{display:flex;gap:5px;flex-wrap:wrap}.vocab span{background:#eef2ff;color:#3653ad;border-radius:9px;padding:5px 7px;font-weight:750}.speedcompact{display:flex;align-items:center;justify-content:center;gap:5px;margin:12px 0;font-size:11px;color:var(--muted)}
 .speedcompact button{border:1px solid var(--line);background:#fff;border-radius:9px;padding:6px 8px;font-weight:800}.speedcompact button.on{background:var(--blue);color:#fff;border-color:var(--blue)}
 #stepSpeak .dictate{margin:18px 0 8px;text-align:center}.focuscard .sentence{margin:12px 0}
+.tapword{display:inline-block;padding:2px 3px;border-radius:7px;cursor:pointer;border-bottom:1px dashed #9aa7c7}
+.tapword:active{background:var(--soft)}
+.pronounce{display:none;text-align:left;background:#f7f8fb;border:1px solid var(--line);border-radius:14px;padding:10px;margin:8px 0;font-size:12px;line-height:1.5}
+.pronounce.on{display:block}.pronounce b{font-size:16px}.pronounce .prow{display:flex;gap:6px;margin-top:7px}.pronounce .btn{min-height:36px;font-size:11px;padding:6px 9px}
 @media(max-width:700px){.focuscard{min-height:calc(100vh - 105px)}.stepicon{font-size:36px}.lessonstep h2{font-size:20px}.focuscard .chunkbox{margin:8px 0}.bigaction{min-height:48px}}
 </style>
 </head>
 <body>
 <div class="updatebar" id="updateBar">Yeni SpeakLoop sürümü hazır. <button id="updateNow">Güncelle</button></div>
 <div class="app">
- <div class="top"><div class="brand">🗣️ SpeakLoop <small id="appVersion">V11.1</small></div><div class="streak" id="streak">🔥 1 gün</div></div>
+ <div class="top"><div class="brand">🗣️ SpeakLoop <small id="appVersion">V11.2</small></div><div class="streak" id="streak">🔥 1 gün</div></div>
 
  <section id="home" class="screen active">
   <div class="card hero">
@@ -130,7 +134,7 @@ h2{font-size:17px;margin:0 0 10px}.lesson{display:flex;gap:12px;align-items:cent
 
     <div id="stepShadow" class="lessonstep">
       <div class="stepicon">🎧</div><h2>Shadowing</h2>
-      <div class="sentence"><div class="en" id="target"></div><div class="tr" id="translation"></div></div>
+      <div class="sentence"><div class="en" id="target"></div><div class="tr" id="translation"></div></div><div class="pronounce" id="pronounceShadow"></div>
       <div class="chunkbox"><div id="chunks"></div><div id="naturalNote" class="natural"></div></div>
       <button class="btn primary wide bigaction" id="shadow">🔊 Dinle ve hemen arkasından söyle</button>
       <button class="btn secondary wide nextstep" data-go="speak">Söyledim →</button>
@@ -138,7 +142,7 @@ h2{font-size:17px;margin:0 0 10px}.lesson{display:flex;gap:12px;align-items:cent
 
     <div id="stepSpeak" class="lessonstep">
       <div class="stepicon">🎤</div><h2>Şimdi Sen Söyle</h2>
-      <div class="sentence"><div class="en" id="speakTarget"></div></div>
+      <div class="sentence"><div class="en" id="speakTarget"></div></div><div class="pronounce" id="pronounceSpeak"></div>
       <input id="dictateInput" class="dictate" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="Buraya dokun → klavye 🎤 → İngilizce konuş">
       <button class="btn primary wide bigaction" id="checkDictation">✓ Kontrol Et</button>
       <div class="heard" id="heard" style="display:none"></div>
@@ -328,6 +332,15 @@ function storyWords(story){let stop=new Set("the a an and or but you your are is
 function speak(rate){let x=current();if(!("speechSynthesis"in window)){ $("result").textContent="Sesli okuma bu ortamda desteklenmiyor.";return}speechSynthesis.cancel();let u=new SpeechSynthesisUtterance(x[1]);u.lang="en-US";u.rate=rate;speechSynthesis.speak(u)}
 
 let selectedRate=.88,rapidClock=null;
+const PRON={
+reservation:["rezırveyşın","/ˌrez.ɚˈveɪ.ʃən/","rezervasyon"],breakfast:["brekfıst","/ˈbrek.fəst/","kahvaltı"],included:["inkludıd","/ɪnˈkluː.dɪd/","dahil"],coffee:["kafi","/ˈkɑː.fi/","kahve"],please:["pliiz","/pliːz/","lütfen"],bill:["bil","/bɪl/","hesap"],hotel:["houtel","/hoʊˈtel/","otel"],meeting:["miiting","/ˈmiː.tɪŋ/","toplantı"],later:["leytır","/ˈleɪ.tɚ/","daha sonra"],second:["sekınd","/ˈsek.ənd/","saniye"],looking:["luking","/ˈlʊk.ɪŋ/","bakmak"],thanks:["tenks","/θæŋks/","teşekkürler"],night:["nayt","/naɪt/","gece"],nights:["nayts","/naɪts/","geceler"],could:["kud","/kʊd/","-ebilir misiniz"],would:["wud","/wʊd/","-erdi/-ardı"],again:["ıgen","/əˈɡen/","tekrar"],there:["der","/ðer/","orada"],here:["hir","/hɪr/","burada"],about:["ıbaut","/əˈbaʊt/","hakkında"]}
+};
+function wordHtml(text){return String(text||"").split(/(\s+)/).map(p=>/^\s+$/.test(p)?p:'<span class="tapword" data-word="'+p.replace(/[^A-Za-z']/g,"").toLowerCase()+'">'+p+'</span>').join("")}
+function pronunciationGuess(w){let p=PRON[w];return p||["Sesini dinleyin","IPA bu kelime için eklenmedi","Anlam için Story bağlamına bakın"]}
+function bindWords(){
+ document.querySelectorAll(".tapword").forEach(el=>el.onclick=()=>{let w=el.dataset.word;if(!w)return;let p=pronunciationGuess(w),box=el.closest("#stepShadow")?$("pronounceShadow"):$("pronounceSpeak");box.classList.add("on");box.innerHTML="<b>"+w+"</b><br><strong>Okunuş:</strong> "+p[0]+"<br><strong>IPA:</strong> "+p[1]+"<br><strong>Anlam:</strong> "+p[2]+'<div class="prow"><button class="btn primary" data-wlisten>🔊 Dinle</button><button class="btn secondary" data-wslow>🐢 Yavaş</button></div>';box.querySelector("[data-wlisten]").onclick=()=>speakText(w,.82);box.querySelector("[data-wslow]").onclick=()=>speakText(w,.55)})
+}
+function setTargets(x){$("target").innerHTML=wordHtml(x[1]);$("speakTarget").innerHTML=wordHtml(x[1]);$("pronounceShadow").classList.remove("on");$("pronounceSpeak").classList.remove("on");bindWords()}
 function speakText(text,rate,cb){if(!("speechSynthesis" in window))return;speechSynthesis.cancel();let u=new SpeechSynthesisUtterance(text);u.lang="en-US";u.rate=rate||selectedRate;if(cb)u.onend=cb;speechSynthesis.speak(u)}
 function speakAt(rate, cb){
  let x=current(); if(!("speechSynthesis" in window))return;
@@ -366,9 +379,9 @@ function setLessonStep(step){
 }
 function renderPractice(){
  activeStory=storyPack();storyLineIndex=0;
- if(!activeStory){let x=current();$("scene").textContent=x[0];$("target").textContent=x[1];$("speakTarget").textContent=x[1];$("translation").textContent=x[2];$("chunks").innerHTML=(x[3]||x[1]).split("/").map(s=>'<span class="modepill">'+s.trim()+'</span>').join("");$("naturalNote").textContent=x[4]||"";$("dictateInput").value="";$("result").textContent="";$("words").innerHTML="";setLessonStep("listen");return}
+ if(!activeStory){let x=current();$("scene").textContent=x[0];setTargets(x);$("translation").textContent=x[2];$("chunks").innerHTML=(x[3]||x[1]).split("/").map(s=>'<span class="modepill">'+s.trim()+'</span>').join("");$("naturalNote").textContent=x[4]||"";$("dictateInput").value="";$("result").textContent="";$("words").innerHTML="";setLessonStep("listen");return}
  let x=current(),weak=weakForTopic();$("scene").textContent=x[0];$("storyText").textContent=activeStory.en+(weak?"\n\n🧠 Akıllı tekrar: Önceki Story’de zorlandığın kalıp: “"+weak.target+"”":"");$("storyPos").textContent="Senaryo "+((storyIndex%(STORY_PACKS[S.topic].length))+1)+" • "+activeStory.lines.length+" cümle çalışılacak";
- $("storyMeaning").textContent=activeStory.tr;let sw=storyWords(activeStory);$("storyWords").innerHTML='<div class="vocab">'+sw.map(w=>'<span><b>'+w[0]+'</b> → '+w[1]+'</span>').join("")+'</div>';$("storyMeaning").classList.remove("on");$("storyWords").classList.remove("on");$("target").textContent=x[1];$("speakTarget").textContent=x[1];$("translation").textContent=x[2];
+ $("storyMeaning").textContent=activeStory.tr;let sw=storyWords(activeStory);$("storyWords").innerHTML='<div class="vocab">'+sw.map(w=>'<span><b>'+w[0]+'</b> → '+w[1]+'</span>').join("")+'</div>';$("storyMeaning").classList.remove("on");$("storyWords").classList.remove("on");setTargets(x);$("translation").textContent=x[2];
  $("chunks").innerHTML=(x[3]||x[1]).split("/").map(s=>'<span class="modepill">'+s.trim()+'</span>').join("");
  $("naturalNote").textContent=x[4]||"Cümleyi anlam blokları halinde dinle.";
  $("heard").textContent="";$("result").textContent="";$("words").innerHTML="";$("dictateInput").value="";
