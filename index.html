@@ -91,7 +91,7 @@ h2{font-size:17px;margin:0 0 10px}.lesson{display:flex;gap:12px;align-items:cent
 <body>
 <div class="updatebar" id="updateBar">Yeni SpeakLoop sürümü hazır. <button id="updateNow">Güncelle</button></div>
 <div class="app">
- <div class="top"><div class="brand">🗣️ SpeakLoop <small id="appVersion">V11.2.1</small></div><div class="streak" id="streak">🔥 1 gün</div></div>
+ <div class="top"><div class="brand">🗣️ SpeakLoop <small id="appVersion">V11.3</small></div><div class="streak" id="streak">🔥 1 gün</div></div>
 
  <section id="home" class="screen active">
   <div class="card hero">
@@ -120,6 +120,15 @@ h2{font-size:17px;margin:0 0 10px}.lesson{display:flex;gap:12px;align-items:cent
       <div class="storybox" id="storyMeaning"></div>
       <div class="storybox" id="storyWords"></div>
       <button class="btn secondary wide" id="storyNext">Cümleleri Çalış →</button>
+    </div>
+
+    <div id="stepPattern" class="lessonstep">
+      <div class="stepicon">🧩</div><h2>Kalıbı Öğren</h2>
+      <p class="stephelp">Tek cümleyi değil, yeni cümleler üretebileceğin kalıbı öğren.</p>
+      <div class="sentence"><div class="en" id="patternText"></div><div class="tr" id="patternMeaning"></div></div>
+      <div class="chunkbox" id="patternExamples"></div>
+      <button class="btn primary wide bigaction" id="patternListen">🔊 Örnekleri Dinle</button>
+      <button class="btn secondary wide nextstep" data-go="listen">Dinlemeye Geç →</button>
     </div>
 
     <div id="stepListen" class="lessonstep">
@@ -370,22 +379,22 @@ function renderHome(){
 let lessonStep="story";
 function setLessonStep(step){
  lessonStep=step;
- const ids={story:"stepStory",listen:"stepListen",shadow:"stepShadow",speak:"stepSpeak",role:"stepRole",result:"stepResult"};
+ const ids={story:"stepStory",pattern:"stepPattern",listen:"stepListen",shadow:"stepShadow",speak:"stepSpeak",role:"stepRole",result:"stepResult"};
  Object.values(ids).forEach(id=>$(id).classList.remove("on"));
  $(ids[step]).classList.add("on");
- const n={story:1,listen:2,shadow:3,speak:4,role:5,result:6}[step];
- $("stepCount").textContent=n+"/6";$("stepBar").style.width=(n*16.67)+"%";
+ const n={story:1,pattern:2,listen:3,shadow:4,speak:5,role:6,result:7}[step];
+ $("stepCount").textContent=n+"/7";$("stepBar").style.width=(n*14.2857)+"%";
  if(step==="speak")setTimeout(()=>$("dictateInput").focus(),120);if(step==="role")setTimeout(()=>$("roleInput").focus(),120);
 }
 function renderPractice(){
  activeStory=storyPack();storyLineIndex=0;
- if(!activeStory){let x=current();$("scene").textContent=x[0];setTargets(x);$("translation").textContent=x[2];$("chunks").innerHTML=(x[3]||x[1]).split("/").map(s=>'<span class="modepill">'+s.trim()+'</span>').join("");$("naturalNote").textContent=x[4]||"";$("dictateInput").value="";$("result").textContent="";$("words").innerHTML="";setLessonStep("listen");return}
+ if(!activeStory){let x=current();$("scene").textContent=x[0];setTargets(x);$("translation").textContent=x[2];$("chunks").innerHTML=(x[3]||x[1]).split("/").map(s=>'<span class="modepill">'+s.trim()+'</span>').join("");$("naturalNote").textContent=x[4]||"";$("dictateInput").value="";$("result").textContent="";$("words").innerHTML="";renderPattern();setLessonStep("pattern");return}
  let x=current(),weak=weakForTopic();$("scene").textContent=x[0];$("storyText").textContent=activeStory.en+(weak?"\n\n🧠 Akıllı tekrar: Önceki Story’de zorlandığın kalıp: “"+weak.target+"”":"");$("storyPos").textContent="Senaryo "+((storyIndex%(STORY_PACKS[S.topic].length))+1)+" • "+activeStory.lines.length+" cümle çalışılacak";
  $("storyMeaning").textContent=activeStory.tr;let sw=storyWords(activeStory);$("storyWords").innerHTML='<div class="vocab">'+sw.map(w=>'<span><b>'+w[0]+'</b> → '+w[1]+'</span>').join("")+'</div>';$("storyMeaning").classList.remove("on");$("storyWords").classList.remove("on");setTargets(x);$("translation").textContent=x[2];
  $("chunks").innerHTML=(x[3]||x[1]).split("/").map(s=>'<span class="modepill">'+s.trim()+'</span>').join("");
  $("naturalNote").textContent=x[4]||"Cümleyi anlam blokları halinde dinle.";
  $("heard").textContent="";$("result").textContent="";$("words").innerHTML="";$("dictateInput").value="";
- setLessonStep("story");
+ renderPattern();setLessonStep("story");
 }
 function paintWords(spoken){
  let target=normalize(current()[1]).split(" "),got=normalize(spoken).split(" ");$("words").innerHTML=target.map(w=>`<span class="word ${got.includes(w)?"":"miss"}">${w}</span>`).join("")
@@ -404,8 +413,26 @@ function renderReview(){
 $("addStoryBtn").onclick=()=>{$("addStoryBox").style.display=$("addStoryBox").style.display==="none"?"block":"none"};
 $("saveStory").onclick=()=>{let en=$("customStoryEn").value.trim(),tr=$("customStoryTr").value.trim(),title=$("customStoryTitle").value.trim();if(!en){alert("İngilizce story metnini girin.");return}S.customStories=S.customStories||{};S.customStories[storyGroupKey()]=S.customStories[storyGroupKey()]||[];S.customStories[storyGroupKey()].push({title:title||"Benim Story'm",en:en,tr:tr||"Türkçe çeviri eklenmedi."});storyIndex=topicStories().length-1;S.storyChoice=S.storyChoice||{};S.storyChoice[storyGroupKey()]=storyIndex;S.storyIndex=storyIndex;save();$("customStoryTitle").value="";$("customStoryEn").value="";$("customStoryTr").value="";$("addStoryBox").style.display="none";renderHome();showScreen("practice");renderPractice()};
 $("storyListen").onclick=()=>{if(activeStory)speakText(activeStory.en,.88)};
-$("storyNext").onclick=()=>{storyLineIndex=0;renderStoryLine();setLessonStep("listen")};
-function renderStoryLine(){let x=current(),weak=weakForTopic();clearInterval(rapidClock);$("rapidTimer").textContent="";$("dialoguePartner").textContent=dialoguePrompt();$("roleTr").textContent="Türkçe niyet: "+x[2];$("rolePrompt").textContent=weak?"Gerçek diyalog · Önceki zayıf kalıbın yeni Story’de tekrar karşına çıkacak.":"Gerçek diyalog · Hazır İngilizce cevap yok; kendin üret.";$("mistakeBox").style.display="none";$("roleInput").value="";$("scene").textContent=x[0];setTargets(x);$("translation").textContent=x[2];$("chunks").innerHTML=x[1].split(/[,?.!]/).filter(Boolean).map(s=>'<span class="modepill">'+s.trim()+'</span>').join("");$("naturalNote").textContent="Mini senaryodan cümle "+(storyLineIndex+1)+"/"+activeStory.lines.length;$("dictateInput").value="";$("result").textContent="";$("words").innerHTML=""}
+$("storyNext").onclick=()=>{storyLineIndex=0;renderStoryLine();setLessonStep("pattern")};
+function patternFor(text){
+ let t=String(text||"");
+ let rules=[
+ [/Can I get\s+(.+?)([?.!]|$)/i,"Can I get + ___ ?","Bir şey istemek / sipariş etmek",["Can I get a coffee, please?","Can I get some water, please?","Can I get the bill, please?"]],
+ [/Could (you|we)\s+(.+?)([?.!]|$)/i,"Could you/we + ___ ?","Nazikçe rica etmek",["Could you help me, please?","Could you say that again?","Could we get the bill, please?"]],
+ [/I('m| am)\s+(.+?)([?.!]|$)/i,"I'm + ___","Durumunu veya yaptığını anlatmak",["I'm on my way.","I'm running a little late.","I'm just looking, thanks."]],
+ [/I('ll| will)\s+(.+?)([?.!]|$)/i,"I'll + ___","Ne yapacağını söylemek",["I'll text you later.","I'll have the same, thanks.","I'll get back to you."]],
+ [/Is\s+(.+?)\s+(included)([?.!]|$)/i,"Is + ___ + included?","Bir şeyin fiyata/hizmete dahil olup olmadığını sormak",["Is breakfast included?","Is Wi-Fi included?","Is service included?"]],
+ [/Let('s| us)\s+(.+?)([?.!]|$)/i,"Let's + ___","Birlikte bir şey yapmayı önermek",["Let's catch up.","Let's meet later.","Let's talk over coffee."]]
+ ];
+ for(let r of rules)if(r[0].test(t))return {p:r[1],m:r[2],e:r[3]};
+ let words=normalize(t).split(" ");return {p:(words.slice(0,Math.min(3,words.length)).join(" ")+" + ___"),m:"Bu başlangıcı farklı kelimelerle kullanarak yeni cümleler üret.",e:[t]};
+}
+function renderPattern(){
+ let p=patternFor(current()[1]);$("patternText").textContent=p.p;$("patternMeaning").textContent=p.m;
+ $("patternExamples").innerHTML="<b>🔄 Varyasyonlar</b>"+p.e.map(x=>'<div style="margin-top:6px">• '+x+"</div>").join("");
+ $("patternListen").onclick=()=>{let i=0;function go(){if(i>=p.e.length)return;speakText(p.e[i++],.82,go)}go()}
+}
+function renderStoryLine(){let x=current(),weak=weakForTopic();clearInterval(rapidClock);$("rapidTimer").textContent="";$("dialoguePartner").textContent=dialoguePrompt();$("roleTr").textContent="Türkçe niyet: "+x[2];$("rolePrompt").textContent=weak?"Gerçek diyalog · Önceki zayıf kalıbın yeni Story’de tekrar karşına çıkacak.":"Gerçek diyalog · Hazır İngilizce cevap yok; kendin üret.";$("mistakeBox").style.display="none";$("roleInput").value="";$("scene").textContent=x[0];setTargets(x);$("translation").textContent=x[2];$("chunks").innerHTML=x[1].split(/[,?.!]/).filter(Boolean).map(s=>'<span class="modepill">'+s.trim()+'</span>').join("");$("naturalNote").textContent="Mini senaryodan cümle "+(storyLineIndex+1)+"/"+activeStory.lines.length;renderPattern();$("dictateInput").value="";$("result").textContent="";$("words").innerHTML=""}
 $("showMeaning").onclick=()=>$("storyMeaning").classList.toggle("on");
 $("showWords").onclick=()=>$("storyWords").classList.toggle("on");
 $("rapidStart").onclick=rapidRecall;
