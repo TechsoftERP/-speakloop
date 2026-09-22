@@ -1,4 +1,4 @@
-const VERSION='speakloop-pwa-11.2.1';
+const VERSION='speakloop-pwa-11.3.0';
 const APP='./index.html';
 const STATIC=['./manifest.webmanifest','./icons/icon-180.png','./icons/icon-192.png','./icons/icon-512.png'];
 
