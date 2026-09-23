@@ -91,7 +91,7 @@ h2{font-size:17px;margin:0 0 10px}.lesson{display:flex;gap:12px;align-items:cent
 <body>
 <div class="updatebar" id="updateBar">Yeni SpeakLoop sürümü hazır. <button id="updateNow">Güncelle</button></div>
 <div class="app">
- <div class="top"><div class="brand">🗣️ SpeakLoop <small id="appVersion">V11.5</small></div><div class="streak" id="streak">🔥 1 gün</div></div>
+ <div class="top"><div class="brand">🗣️ SpeakLoop <small id="appVersion">V11.6</small></div><div class="streak" id="streak">🔥 1 gün</div></div>
 
  <section id="home" class="screen active">
   <div class="card hero">
@@ -115,7 +115,10 @@ h2{font-size:17px;margin:0 0 10px}.lesson{display:flex;gap:12px;align-items:cent
     <div id="stepStory" class="lessonstep">
       <div class="stepicon">🎬</div><h2>Mini Senaryo</h2>
       <p class="stephelp" id="storyText"></p><div class="hint" id="storyPos"></div>
-      <button class="btn primary wide bigaction" id="storyListen">🔊 Hikâyeyi Dinle</button>
+      <div class="actions" style="margin-top:8px">
+<button class="btn primary" id="storyListen">▶️ Hikâyeyi Başlat</button>
+<button class="btn secondary" id="storyStop">⏹ Durdur</button>
+</div>
       <div class="storytools"><button class="btn secondary" id="showMeaning">🇹🇷 Türkçe Anlam</button><button class="btn secondary" id="showWords">🔑 Kelimeler</button></div>
       <div class="storybox" id="storyMeaning"></div>
       <div class="storybox" id="storyWords"></div>
@@ -353,7 +356,16 @@ function bindWords(){
  document.querySelectorAll(".tapword").forEach(el=>el.onclick=()=>{let w=el.dataset.word;if(!w)return;let p=pronunciationGuess(w),box=el.closest("#stepShadow")?$("pronounceShadow"):$("pronounceSpeak");box.classList.add("on");box.innerHTML="<b>"+w+"</b><br><strong>Okunuş:</strong> "+p[0]+"<br><strong>IPA:</strong> "+p[1]+"<br><strong>Anlam:</strong> "+p[2]+'<div class="prow"><button class="btn primary" data-wlisten>🔊 Dinle</button><button class="btn secondary" data-wslow>🐢 Yavaş</button></div>';box.querySelector("[data-wlisten]").onclick=()=>speakText(w,.82);box.querySelector("[data-wslow]").onclick=()=>speakText(w,.55)})
 }
 function setTargets(x){$("target").innerHTML=wordHtml(x[1]);$("speakTarget").innerHTML=wordHtml(x[1]);$("pronounceShadow").classList.remove("on");$("pronounceSpeak").classList.remove("on");bindWords()}
-function speakText(text,rate,cb){if(!("speechSynthesis" in window))return;speechSynthesis.cancel();let u=new SpeechSynthesisUtterance(text);u.lang="en-US";u.rate=rate||selectedRate;if(cb)u.onend=cb;speechSynthesis.speak(u)}
+let preferredVoice=null;
+function chooseNaturalMaleVoice(){
+ let vs=speechSynthesis.getVoices().filter(v=>/^en[-_]/i.test(v.lang));
+ let preferred=["Daniel","Alex","Aaron","Arthur","Eddy","Reed","Ralph","Fred","Tom","Microsoft Guy Online","Google UK English Male"];
+ for(let n of preferred){let v=vs.find(x=>x.name.toLowerCase().includes(n.toLowerCase()));if(v)return v}
+ return vs.find(v=>/male|daniel|alex|aaron|arthur|guy/i.test(v.name))||vs.find(v=>/premium|enhanced|natural/i.test(v.name))||vs[0]||null;
+}
+if("speechSynthesis" in window){preferredVoice=chooseNaturalMaleVoice();speechSynthesis.onvoiceschanged=()=>{preferredVoice=chooseNaturalMaleVoice()}}
+function stopSpeech(){if("speechSynthesis" in window)speechSynthesis.cancel()}
+function speakText(text,rate,cb){if(!("speechSynthesis" in window))return;stopSpeech();let u=new SpeechSynthesisUtterance(text);u.lang="en-US";u.rate=rate||selectedRate;u.pitch=.92;if(preferredVoice)u.voice=preferredVoice;if(cb)u.onend=cb;speechSynthesis.speak(u)}
 function speakAt(rate, cb){
  let x=current(); if(!("speechSynthesis" in window))return;
  speakText(x[1],rate,cb);
@@ -365,7 +377,7 @@ function shadow(){
    $("micHint").textContent="Şimdi gecikmeden cümleyi taklit et. Klavye 🎤 diktesini açıp aynı ritimde söyle.";
  });
 }
-function showScreen(id){document.querySelectorAll(".screen").forEach(x=>x.classList.remove("active"));$(id).classList.add("active");document.querySelectorAll(".navbtn").forEach(x=>x.classList.toggle("on",x.dataset.screen===id));if(id==="review")renderReview()}
+function showScreen(id){stopSpeech();document.querySelectorAll(".screen").forEach(x=>x.classList.remove("active"));$(id).classList.add("active");document.querySelectorAll(".navbtn").forEach(x=>x.classList.toggle("on",x.dataset.screen===id));if(id==="review")renderReview()}
 function renderStoryLibrary(){
  let card=$("storyLibraryCard");if(S.topic==="all"){card.style.display="none";return}card.style.display="block";
  let arr=topicStories();$("storyLibrary").innerHTML=arr.map((s,i)=>'<button class="storypick '+(i===storyIndex?'on':'')+'" data-story="'+i+'"><b>🎬 '+s.title+'</b><span>'+splitStory(s.en).length+' cümle'+(s.custom?' · Eklenen Story':'')+'</span></button>').join("");
@@ -381,7 +393,7 @@ function renderHome(){
 }
 let lessonStep="story";
 function setLessonStep(step){
- lessonStep=step;
+ stopSpeech();lessonStep=step;
  const ids={story:"stepStory",pattern:"stepPattern",listen:"stepListen",shadow:"stepShadow",speak:"stepSpeak",role:"stepRole",result:"stepResult"};
  Object.values(ids).forEach(id=>$(id).classList.remove("on"));
  $(ids[step]).classList.add("on");
@@ -415,7 +427,8 @@ function renderReview(){
 }
 $("addStoryBtn").onclick=()=>{$("addStoryBox").style.display=$("addStoryBox").style.display==="none"?"block":"none"};
 $("saveStory").onclick=()=>{let en=$("customStoryEn").value.trim(),tr=$("customStoryTr").value.trim(),title=$("customStoryTitle").value.trim();if(!en){alert("İngilizce story metnini girin.");return}S.customStories=S.customStories||{};S.customStories[storyGroupKey()]=S.customStories[storyGroupKey()]||[];S.customStories[storyGroupKey()].push({title:title||"Benim Story'm",en:en,tr:tr||"Türkçe çeviri eklenmedi."});storyIndex=topicStories().length-1;S.storyChoice=S.storyChoice||{};S.storyChoice[storyGroupKey()]=storyIndex;S.storyIndex=storyIndex;save();$("customStoryTitle").value="";$("customStoryEn").value="";$("customStoryTr").value="";$("addStoryBox").style.display="none";renderHome();showScreen("practice");renderPractice()};
-$("storyListen").onclick=()=>{if(activeStory)speakText(activeStory.en,.88)};
+$("storyListen").onclick=()=>{if(activeStory)speakText(activeStory.en,.86)};
+$("storyStop").onclick=stopSpeech;
 $("storyNext").onclick=()=>{storyLineIndex=0;renderStoryLine();setLessonStep("pattern")};
 function patternFor(text){
  let t=String(text||"");
