@@ -91,7 +91,7 @@ h2{font-size:17px;margin:0 0 10px}.lesson{display:flex;gap:12px;align-items:cent
 <body>
 <div class="updatebar" id="updateBar">Yeni SpeakLoop sürümü hazır. <button id="updateNow">Güncelle</button></div>
 <div class="app">
- <div class="top"><div class="brand">🗣️ SpeakLoop <small id="appVersion">V11.3</small></div><div class="streak" id="streak">🔥 1 gün</div></div>
+ <div class="top"><div class="brand">🗣️ SpeakLoop <small id="appVersion">V11.4</small></div><div class="streak" id="streak">🔥 1 gün</div></div>
 
  <section id="home" class="screen active">
   <div class="card hero">
@@ -128,6 +128,8 @@ h2{font-size:17px;margin:0 0 10px}.lesson{display:flex;gap:12px;align-items:cent
       <div class="sentence"><div class="en" id="patternText"></div><div class="tr" id="patternMeaning"></div></div>
       <div class="chunkbox" id="patternExamples"></div>
       <button class="btn primary wide bigaction" id="patternListen">🔊 Örnekleri Dinle</button>
+      <div class="chunkbox" id="chunkDrill"><b>🔥 Active Chunk</b><div id="chunkPrompt" style="margin:6px 0"></div><div class="hint" id="chunkTimer"></div></div>
+      <button class="btn primary wide" id="chunkStart">⚡ 3 Saniyede Üret</button>
       <button class="btn secondary wide nextstep" data-go="listen">Dinlemeye Geç →</button>
     </div>
 
@@ -340,7 +342,7 @@ function storyWords(story){let stop=new Set("the a an and or but you your are is
 
 function speak(rate){let x=current();if(!("speechSynthesis"in window)){ $("result").textContent="Sesli okuma bu ortamda desteklenmiyor.";return}speechSynthesis.cancel();let u=new SpeechSynthesisUtterance(x[1]);u.lang="en-US";u.rate=rate;speechSynthesis.speak(u)}
 
-let selectedRate=.88,rapidClock=null;
+let selectedRate=.88,rapidClock=null,chunkClock=null;
 const PRON={
 reservation:["rezırveyşın","/ˌrez.ɚˈveɪ.ʃən/","rezervasyon"],breakfast:["brekfıst","/ˈbrek.fəst/","kahvaltı"],included:["inkludıd","/ɪnˈkluː.dɪd/","dahil"],coffee:["kafi","/ˈkɑː.fi/","kahve"],please:["pliiz","/pliːz/","lütfen"],bill:["bil","/bɪl/","hesap"],hotel:["houtel","/hoʊˈtel/","otel"],meeting:["miiting","/ˈmiː.tɪŋ/","toplantı"],later:["leytır","/ˈleɪ.tɚ/","daha sonra"],second:["sekınd","/ˈsek.ənd/","saniye"],looking:["luking","/ˈlʊk.ɪŋ/","bakmak"],thanks:["tenks","/θæŋks/","teşekkürler"],night:["nayt","/naɪt/","gece"],nights:["nayts","/naɪts/","geceler"],could:["kud","/kʊd/","-ebilir misiniz"],would:["wud","/wʊd/","-erdi/-ardı"],again:["ıgen","/əˈɡen/","tekrar"],there:["der","/ðer/","orada"],here:["hir","/hɪr/","burada"],about:["ıbaut","/əˈbaʊt/","hakkında"]
 };
@@ -427,10 +429,19 @@ function patternFor(text){
  for(let r of rules)if(r[0].test(t))return {p:r[1],m:r[2],e:r[3]};
  let words=normalize(t).split(" ");return {p:(words.slice(0,Math.min(3,words.length)).join(" ")+" + ___"),m:"Bu başlangıcı farklı kelimelerle kullanarak yeni cümleler üret.",e:[t]};
 }
+function chunkChallenge(){
+ let p=patternFor(current()[1]), e=p.e||[current()[1]], pick=e[(Date.now()+S.idx)%e.length];
+ let trMap={"Can I get a coffee, please?":"Bir kahve iste.","Can I get some water, please?":"Biraz su iste.","Can I get the bill, please?":"Hesabı iste.","Could you help me, please?":"Yardım iste.","Could you say that again?":"Tekrar söylemesini iste.","Could we get the bill, please?":"Hesabı nazikçe iste.","I'm on my way.":"Yolda olduğunu söyle.","I'm running a little late.":"Biraz gecikeceğini söyle.","I'm just looking, thanks.":"Sadece baktığını söyle.","I'll text you later.":"Daha sonra mesaj atacağını söyle.","I'll have the same, thanks.":"Aynısından istediğini söyle.","I'll get back to you.":"Daha sonra dönüş yapacağını söyle.","Is breakfast included?":"Kahvaltının dahil olup olmadığını sor.","Is Wi-Fi included?":"Wi-Fi'ın dahil olup olmadığını sor.","Is service included?":"Servisin dahil olup olmadığını sor.","Let's catch up.":"Görüşüp sohbet etmeyi öner.","Let's meet later.":"Daha sonra buluşmayı öner.","Let's talk over coffee.":"Kahve içerken konuşmayı öner."};
+ return {answer:pick,prompt:trMap[pick]||current()[2]};
+}
+function startChunkDrill(){
+ clearInterval(chunkClock);let q=chunkChallenge(),n=3;$("chunkPrompt").textContent="🇹🇷 "+q.prompt;$("chunkTimer").textContent="⚡ "+n;
+ speakText(q.prompt,.9);chunkClock=setInterval(()=>{n--;if(n>0){$("chunkTimer").textContent="⚡ "+n}else{clearInterval(chunkClock);$("chunkTimer").textContent="🎤 Şimdi İngilizce söyle!";setTimeout(()=>speakText(q.answer,.82),2200)}},1000);
+}
 function renderPattern(){
  let p=patternFor(current()[1]);$("patternText").textContent=p.p;$("patternMeaning").textContent=p.m;
  $("patternExamples").innerHTML="<b>🔄 Varyasyonlar</b>"+p.e.map(x=>'<div style="margin-top:6px">• '+x+"</div>").join("");
- $("patternListen").onclick=()=>{let i=0;function go(){if(i>=p.e.length)return;speakText(p.e[i++],.82,go)}go()}
+ $("patternListen").onclick=()=>{let i=0;function go(){if(i>=p.e.length)return;speakText(p.e[i++],.82,go)}go()};$("chunkPrompt").textContent="Kalıbı gördün. Şimdi Türkçe ipucundan İngilizceyi düşünmeden üret.";$("chunkTimer").textContent="";$("chunkStart").onclick=startChunkDrill;
 }
 function renderStoryLine(){let x=current(),weak=weakForTopic();clearInterval(rapidClock);$("rapidTimer").textContent="";$("dialoguePartner").textContent=dialoguePrompt();$("roleTr").textContent="Türkçe niyet: "+x[2];$("rolePrompt").textContent=weak?"Gerçek diyalog · Önceki zayıf kalıbın yeni Story’de tekrar karşına çıkacak.":"Gerçek diyalog · Hazır İngilizce cevap yok; kendin üret.";$("mistakeBox").style.display="none";$("roleInput").value="";$("scene").textContent=x[0];setTargets(x);$("translation").textContent=x[2];$("chunks").innerHTML=x[1].split(/[,?.!]/).filter(Boolean).map(s=>'<span class="modepill">'+s.trim()+'</span>').join("");$("naturalNote").textContent="Mini senaryodan cümle "+(storyLineIndex+1)+"/"+activeStory.lines.length;renderPattern();$("dictateInput").value="";$("result").textContent="";$("words").innerHTML=""}
 $("showMeaning").onclick=()=>$("storyMeaning").classList.toggle("on");
@@ -443,8 +454,8 @@ document.querySelectorAll(".speedcompact button").forEach(b=>b.onclick=()=>{
 });
 document.querySelectorAll(".nextstep").forEach(b=>b.onclick=()=>setLessonStep(b.dataset.go));
 $("shadow").onclick=()=>speakAt(selectedRate);
-$("again").onclick=()=>{renderStoryLine();setLessonStep("listen")};
-$("next").onclick=()=>{S.minutes=(S.minutes||0)+.5;if(activeStory&&storyLineIndex<activeStory.lines.length-1){storyLineIndex++;save();renderStoryLine();setLessonStep("listen");setTimeout(()=>speakAt(selectedRate),120)}else{if(activeStory){let n=topicStories().length;storyIndex=n?(storyIndex+1)%n:0;S.storyIndex=storyIndex;S.storyChoice=S.storyChoice||{};S.storyChoice[storyGroupKey()]=storyIndex}S.idx=(S.idx+1)%pool().length;save();renderPractice();renderHome()}};
+$("again").onclick=()=>{renderStoryLine();setLessonStep("pattern")};
+$("next").onclick=()=>{S.minutes=(S.minutes||0)+.5;if(activeStory&&storyLineIndex<activeStory.lines.length-1){storyLineIndex++;save();renderStoryLine();setLessonStep("pattern");setTimeout(()=>renderPattern(),120)}else{if(activeStory){let n=topicStories().length;storyIndex=n?(storyIndex+1)%n:0;S.storyIndex=storyIndex;S.storyChoice=S.storyChoice||{};S.storyChoice[storyGroupKey()]=storyIndex}S.idx=(S.idx+1)%pool().length;save();renderPractice();renderHome()}};
 $("startLesson").onclick=()=>{showScreen("practice");renderPractice();if(S.topic!=="all")setTimeout(()=>$("storyListen").click(),180)};
 document.querySelectorAll(".navbtn").forEach(b=>b.onclick=()=>showScreen(b.dataset.screen));
 $("reviewNow").onclick=()=>{
